@@ -28,6 +28,11 @@ router.use(
     require("./ordering-route")
 )
 
+router.use(
+    "/language",
+    require("./language-route")
+)
+
 router.get(
     "/",
     controller.allFoods
