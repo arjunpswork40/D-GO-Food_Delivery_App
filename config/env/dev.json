@@ -1,0 +1,16 @@
+{
+    "APP_NAME": "food-ordering",
+    "JWT_SECRET": "Th!se*amPl30fSecret",
+    "TOKEN_KEY": "1234-4321-1122",
+    "PASSWORD_KEY": "1122-4321-1234",
+    "BCRYPT_SALT": 15,
+    "role": {
+      "ADMIN": ["admin"],
+      "USER": ["user", "admin"]
+    },
+   
+    "url": {
+      "CLIENT_URL": "localhost:4000/users",
+      "BASE_URL": "localhost:4000"
+    }
+  }
