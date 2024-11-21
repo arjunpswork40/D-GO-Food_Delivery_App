@@ -12,7 +12,7 @@ class controller {
           let dictionary  = English.language;
           switch(language) {
             case 'portuguese':
-              dictionary = Portuguese.Portuguese;
+              dictionary = Portuguese.language;
             default:
               dictionary = dictionary;
           }

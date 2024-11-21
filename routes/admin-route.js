@@ -2,11 +2,25 @@ const express = require("express")
 const router = express.Router()
 const controller = require("../controller/admin")
 const auth = require("../middleware/auth-middleware")
+const { uploadMultipleFiles } = require("../utils/fileUploader")
+const {isFilesExist} = require("../middleware/fileChecker")
+const path=require("path")
+
+const existingPath=path.resolve("./uploads")
+
+const multipleFileUploader = uploadMultipleFiles(
+    "",
+    ["image/png", "image/jpeg", "image/jpg"],
+    existingPath
+  );
+
+
 
 router.post(
     "/",
     auth.decodeTokenAdmin,
     auth.isAdmin,
+    [multipleFileUploader.array("images",10)],
     controller.newFood
 )
 

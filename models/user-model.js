@@ -2,17 +2,62 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
 const userSchema = new Schema(
-    {
-        name: {
-        type: String,
-        trim: true,
-        required: [true, "Name is required"],
-        validate: {
-            validator: (value) => {
-                return /^[a-zA-Z]{2,15}$/.test(value)
+    {  
+        hotelDetails: {
+            name: { type: String, required: true, validate: {
+                validator: (value) => {
+                    return /^[a-zA-Z]{2,15}$/.test(value)
+                },
+                message: problem => `${problem.value} is not a valid name`
+                } },
+            description: { type: String },
+            location: {
+              address: { type: String, required: true },
+              city: { type: String, required: true },
+              state: { type: String, required: true },
+              country: { type: String, required: true },
+              zipcode: { type: String, required: true },
+              coordinates: {
+                lat: { type: Number, required: true },
+                lng: { type: Number, required: true },
+              },
             },
-            message: problem => `${problem.value} is not a valid name`
-            }
+            contactNumber: { type: String, required: true },
+            openingHours: {
+              open: { type: String, required: true }, // Example: "09:00"
+              close: { type: String, required: true }, // Example: "22:00"
+            },
+            images: {
+              hotelImages: [{ type: String }], // URLs or paths to hotel images
+              menuImages: [{ type: String }], 
+              hotelMainImage: [{ type: String }],
+            },
+        },
+        bankDetails: {
+            accountName: { type: String, required: true },
+            accountNumber: { type: String, required: true },
+            bankName: { type: String, required: true },
+            ifscCode: { type: String, required: true },
+        },
+        ratings: {
+            averageRating: { type: Number, default: 0 },
+            totalRatings: { type: Number, default: 0 },
+        },
+        status: {
+            type: String,
+            enum: ['pending', 'approved', 'rejected'],
+            default: 'pending',
+        },
+        name: {
+            type: String,
+            trim: true,
+            required: [true, "Name is required"],
+            validate: {
+                validator: (value) => {
+                    return /^[a-zA-Z]{2,15}$/.test(value)
+                },
+                message: problem => `${problem.value} is not a valid name`
+                }
         },
 
         email: {
@@ -28,8 +73,12 @@ const userSchema = new Schema(
         },
 
         address: {
-            type: String
-        },
+            street: { type: String },
+            city: { type: String },
+            state: { type: String },
+            country: { type: String },
+            pincode: { type: String },
+          },
 
         phone: {
             type: Number,
@@ -47,8 +96,8 @@ const userSchema = new Schema(
         },
 
         password: {
-        type: String,
-        required: [true, "Password is required"]
+            type: String,
+            required: [true, "Password is required"]
         },
 
         cart: [
@@ -57,6 +106,49 @@ const userSchema = new Schema(
                 ref: "Cart"
             }
         ],
+
+        deliveryPartnerDetails: {
+            vehicleType: { type: String, enum: ['bike', 'car', 'bicycle'], default: 'bike' },
+            vehicleNumber: { type: String },
+            licenseNumber: { type: String },
+            currentLocation: {
+              coordinates: {
+                lat: { type: Number },
+                lng: { type: Number },
+              },
+            },
+            status: {
+              type: String,
+              enum: ['active', 'inactive'],
+              default: 'active',
+            },
+            totalDeliveries: { type: Number, default: 0 },
+            earnings: { type: Number, default: 0 },
+          },
+        customerDetails: {
+            favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // References to Owner Users
+            savedAddresses: [
+              {
+                label: { type: String }, // e.g., "Home", "Work"
+                coordinates: {
+                  lat: { type: Number },
+                  lng: { type: Number },
+                },
+                address: { type: String },
+                city: { type: String },
+                state: { type: String },
+                country: { type: String },
+                pincode: { type: String },
+              },
+            ],
+            orders: [
+              {
+                orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+                orderDate: { type: Date },
+                status: { type: String, enum: ['pending', 'completed', 'cancelled'] },
+              },
+            ],
+          },
 
         order: [
             {

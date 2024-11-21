@@ -29,7 +29,7 @@ class controller {
       }
       
       const userJson = auth.authJSON(user)
-      return res.status(200).json(makeJsonResponse('Authenticated', {}, { message:"Authentication successful",user: userJson }, 200, true));
+      return res.status(200).json(makeJsonResponse('Authenticated', { message:"Authentication successful",user: userJson }, {}, 200, true));
     } catch (error) {
       console.log(error);
       
@@ -62,6 +62,8 @@ static async dummyAdmin(req, res, next) {
 }
   static async newFood(req, res, next) {
       let { name, description, price, category } = req.body
+      let files = req.files;
+
       try {
           if (!name || !price || !description) {
             const err = new Error()
@@ -74,27 +76,20 @@ static async dummyAdmin(req, res, next) {
           const foundName = await Food.findOne({"name": name})
   
           if (foundName) {
-              const err = new Error()
-              err.name = "Not Acceptable"
-              err.status = 406
-              err.message = "This food name dey meun before sir/ma"
-              throw err
+            return res.status(406).json(makeJsonResponse('Not Acceptable', {}, { message:"This food name is already exist" }, 406, false));
           }
-
+          const images = files?.length > 0 ? files.map(item=>item.path) : [];
           const food = new Food({
               name,
               description,
               price,
               category,
-              images: binary(req.files.image.data)
+              images: images
 
           })
           await food.save()
   
-          return await res.status(201).json({
-              success: true,
-              message: `${food.name} of price ${price} was added successfully`
-          })
+          return res.status(201).json(makeJsonResponse('Success!', {data: food, message: `${food.name} of price ${price} was added successfully`}, {}, 201, false));
   
       } catch (error) {
           next(error)

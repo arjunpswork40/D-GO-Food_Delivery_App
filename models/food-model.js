@@ -30,7 +30,9 @@ const foodSchema = new Schema(
         },
         
         images: {
-            type: Buffer
+            type: Array,
+            default: [],
+            required: false
         }
     }
 )

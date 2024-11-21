@@ -82,8 +82,41 @@ class controller {
     }
     
     static async newOwner(req, res, next) {
-        const { name, password, email } = req.body;
-    
+        const { body, files } = req;
+        
+        const {
+            name,
+            password,
+            email,
+            phone,
+            hotelName,
+            hotelDescription,
+            hotelLocationAddress,
+            hotelLocationCity,
+            hotelLocationState,
+            hotelLocationCountry,
+            hotelLocationZipCode,
+            hotelLocationCoordinatesLat,
+            hotelLocationCoordinatesLng,
+            hotelContactNumber,
+            closingHours,
+            openingHours,
+            bankDetailsAccountName,
+            bankDetailsAccountNumber,
+            bankDetailsBankName,
+            bankDetailsIfscCode
+        } = req.body
+        
+        const hotelImages = req.files?.hotelImages?.length > 0
+                            ? req.files.hotelImages.map(item => item.path)
+                            : [];
+        const menuImages = req.files?.menuImages?.length > 0
+                            ? req.files.menuImages.map(item => item.path)
+                            : [];
+        const hotelMainImage = req.files?.hotelMainImage?.length > 0
+                            ? req.files.hotelMainImage.map(item => item.path)
+                            : [];
+        
         try {
             // Check if required fields are provided
             if (!name || !email || !password) {
@@ -92,24 +125,55 @@ class controller {
     
             // Use a single database call to check for existing user and create a new one if not found
             const existingUser = await User.findOne({ email, role: "owner" });
-            console.log(existingUser);
             
             if (existingUser) {
                 return res.status(406).json(makeJsonResponse('Not Acceptable', {}, { message: "This user already exists" }, 406, false));
             }
-    
+
             // Hash the password and create the user in one go
             const newUser = new User({
                 name,
                 password: passAuth.hashPassword(password), // Hash the password directly in the user creation
                 email,
-                role:"owner"
+                role:"owner",
+                phone: phone,
+                bankDetails: {
+                    accountName: bankDetailsAccountName,
+                    accountNumber: bankDetailsAccountNumber,
+                    bankName: bankDetailsBankName,
+                    ifscCode: bankDetailsIfscCode,
+                },
+                hotelDetails: {
+                    name: hotelName,
+                    description: hotelDescription,
+                    location: {
+                        address: hotelLocationAddress,
+                        city: hotelLocationCity,
+                        state: hotelLocationState,
+                        country: hotelLocationCountry,
+                        zipcode: hotelLocationZipCode,
+                        coordinates: {
+                            lat: hotelLocationCoordinatesLat,
+                            lng: hotelLocationCoordinatesLng,
+                        },
+                    },
+                    contactNumber: hotelContactNumber,
+                    openingHours: {
+                        open: openingHours,
+                        close: closingHours
+                    },
+                    images: {
+                        hotelImages: hotelImages, // URLs or paths to hotel images
+                        menuImages: menuImages, // URLs or paths to menu images
+                        hotelMainImage: hotelMainImage
+                    },
+                }
             });
     
             // Save the new user and handle the response
             await newUser.save();
     
-            return res.status(201).json(makeJsonResponse('Success', {}, { message: "Owner created successfully", user: auth.authJSON(newUser) }, 201, true));
+            return res.status(201).json(makeJsonResponse('Success', { message: "Owner created successfully", user: auth.authJSON(newUser) }, {}, 201, true));
     
         } catch (error) {
             console.error(`Error creating user: ${error.code} - ${error.message}`);
@@ -173,7 +237,7 @@ class controller {
           }
           
           const userJson = auth.authJSON(user)
-          return res.status(200).json(makeJsonResponse('Authenticated', {}, { message:"Authentication successful",user: userJson }, 200, true));
+          return res.status(200).json(makeJsonResponse('Authenticated', { message:"Authentication successful",user: userJson }, {}, 200, true));
         } catch (error) {
             return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message ?? "Internal error occured" }, 500, false));
         }
@@ -201,7 +265,7 @@ class controller {
           }
           
           const userJson = auth.authJSON(user)
-          return res.status(200).json(makeJsonResponse('Authenticated', {}, { message:"Authentication successful",user: userJson }, 200, true));
+          return res.status(200).json(makeJsonResponse('Authenticated', { message:"Authentication successful",user: userJson }, {}, 200, true));
         } catch (error) {
             return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message ?? "Internal error occured" }, 500, false));
         }
@@ -229,7 +293,7 @@ class controller {
           }
           
           const userJson = auth.authJSON(user)
-          return res.status(200).json(makeJsonResponse('Authenticated', {}, { message:"Authentication successful",user: userJson }, 200, true));
+          return res.status(200).json(makeJsonResponse('Authenticated', { message:"Authentication successful",user: userJson }, {}, 200, true));
         } catch (error) {
             return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message ?? "Internal error occured" }, 500, false));
         }
