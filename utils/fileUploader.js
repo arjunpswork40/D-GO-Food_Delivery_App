@@ -111,7 +111,6 @@ const categorySubCategoryImageUpload = multer({
 
 module.exports = {
   uploadMultipleFiles: (fileName, allowedExtensions, uploadPath) => {
-    console.log('hhhhhhhhhhhhh');
     
     const rootUploadPath = path.join(uploadPath);
     if (!fs.existsSync(rootUploadPath)) {
