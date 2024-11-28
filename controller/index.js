@@ -83,7 +83,6 @@ class controller {
     
     static async newOwner(req, res, next) {
         const { body, files } = req;
-        
         const {
             name,
             password,
@@ -428,23 +427,7 @@ class controller {
         }
     }
 
-    static async delUser(req, res, next) {
-        const user = req.user
-        try {
-            if (!user) {
-                const err = new Error()
-                err.name = "Not Acceptable"
-                err.status = 406
-                err.message = "Could not find the User"
-                throw err
-            }
-    
-            const del = await user.deleteOne()
-            return await res.json(del)
-        } catch (error) {
-            next(error)
-        }
-    }
+   
 }
 
 module.exports = controller

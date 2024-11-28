@@ -49,6 +49,11 @@ router.use(
 )
 
 router.use(
+    "/owner/profile",
+    require("./owner-routes.js")
+)
+
+router.use(
     "/admin",
     require("./admin-route")
 )
@@ -78,16 +83,29 @@ router.get(
     controller.allFoods
 )
 
+// Customer profile
 router.post(
     "/customer/signup",
     controller.newCustomer
 )
+router.post(
+    "/customer/login",
+    controller.customerLogin
+)
+
+// Owner profile
 router.post(
     "/owner/signup",
     uploadFields,
     hotelOwnerValidationRules,
     controller.newOwner
 )
+router.post(
+    "/owner/login",
+    controller.ownerLogin
+)
+
+// Delivery Partner profile
 router.post(
     "/delivery-partner/signup",
     controller.newDeliveryPartner
@@ -96,14 +114,6 @@ router.post(
 router.post(
     "/delivery-partner/login",
     controller.deliveryPartnerLogin
-)
-router.post(
-    "/owner/login",
-    controller.ownerLogin
-)
-router.post(
-    "/customer/login",
-    controller.customerLogin
 )
     
 router.put(
@@ -127,15 +137,6 @@ router.post(
     "/resetpassword",
     controller.resetPassword
 )
-router.get(
-    "/:id",
-    auth.decodeToken,
-    controller.userProfile
-)
 
-router.delete(
-    "/:id",
-    auth.decodeToken,
-    controller.delUser
-)
+
 module.exports = router
