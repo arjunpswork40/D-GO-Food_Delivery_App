@@ -520,9 +520,6 @@ class controller {
         }
     }
 
-<<<<<<< HEAD
-   
-=======
     static async delUser(req, res, next) {
         const user = req.user
         try {
@@ -540,7 +537,6 @@ class controller {
             next(error)
         }
     }
->>>>>>> development
 }
 
 module.exports = controller
