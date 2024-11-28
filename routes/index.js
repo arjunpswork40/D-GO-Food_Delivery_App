@@ -43,6 +43,7 @@ const storage = multer.diskStorage({
 //     existingPath
 //   );
 
+
 router.use(
     "/docs",
     require("./doc")
@@ -51,6 +52,11 @@ router.use(
 router.use(
     "/owner/profile",
     require("./owner-routes.js")
+)
+
+router.use(
+    "/customer_profile",
+    require("./customer_profile-route")
 )
 
 router.use(
@@ -77,6 +83,9 @@ router.use(
     "/language",
     require("./language-route")
 )
+
+
+
 
 router.get(
     "/",

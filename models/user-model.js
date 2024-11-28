@@ -4,7 +4,7 @@ const Schema = mongoose.Schema
 const userSchema = new Schema(
     {  
         hotelDetails: {
-            name: { type: String, required: true, validate: {
+            name: { type: String, required: false, validate: {
                 validator: (value) => {
                     return /^[a-zA-Z]{2,15}$/.test(value)
                 },
@@ -12,20 +12,20 @@ const userSchema = new Schema(
                 } },
             description: { type: String },
             location: {
-              address: { type: String, required: true },
-              city: { type: String, required: true },
-              state: { type: String, required: true },
-              country: { type: String, required: true },
-              zipcode: { type: String, required: true },
+              address: { type: String, required: false },
+              city: { type: String, required: false },
+              state: { type: String, required: false },
+              country: { type: String, required: false },
+              zipcode: { type: String, required: false },
               coordinates: {
-                lat: { type: Number, required: true },
-                lng: { type: Number, required: true },
+                lat: { type: Number, required: false },
+                lng: { type: Number, required: false },
               },
             },
-            contactNumber: { type: String, required: true },
+            contactNumber: { type: String, required: false },
             openingHours: {
-              open: { type: String, required: true }, // Example: "09:00"
-              close: { type: String, required: true }, // Example: "22:00"
+              open: { type: String, required: false }, // Example: "09:00"
+              close: { type: String, required: false }, // Example: "22:00"
             },
             images: {
               hotelImages: [{ type: String }], // URLs or paths to hotel images
@@ -34,10 +34,10 @@ const userSchema = new Schema(
             },
         },
         bankDetails: {
-            accountName: { type: String, required: true },
-            accountNumber: { type: String, required: true },
-            bankName: { type: String, required: true },
-            ifscCode: { type: String, required: true },
+            accountName: { type: String, required: false },
+            accountNumber: { type: String, required: false },
+            bankName: { type: String, required: false },
+            ifscCode: { type: String, required: false },
         },
         ratings: {
             averageRating: { type: Number, default: 0 },
