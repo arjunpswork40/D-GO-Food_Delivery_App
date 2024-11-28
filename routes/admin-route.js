@@ -61,5 +61,13 @@ router.delete(
     auth.isAdmin,
     controller.deleteFood
 )
+
+router.get(
+    "/allpartners",
+    auth.decodeTokenAdmin,
+    auth.isAdmin,
+    controller.allpartners
+)
+
  
 module.exports = router
