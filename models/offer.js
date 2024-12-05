@@ -17,6 +17,11 @@ const offerSchema = new Schema(
             ref: 'User',
             required: true
         },
+        mainOffer: {
+            type: Boolean,
+            required: false,
+            default: false
+        },
         createdAt: {
             type: Date,
             default: Date.now,
@@ -29,6 +34,6 @@ const offerSchema = new Schema(
     {
         timestamps: true,
     }
-  )
-  
+)
+
 module.exports = mongoose.model('Offer', offerSchema)
