@@ -107,8 +107,39 @@ class customerController {
   }
 
 
+  static async getallhotels(req, res, next) {
+    try {
+      // Query the database for all users with role "owner"
+      const customerProfiles = await User.find(
+        { role: "owner" }, // Filter condition
+        "name _id hotelDetails ratings" // Projection: fields to include
+      );
+ const response={ 
+  hotel_name:customerProfiles.hotelDetails.name,
+  hotel_description:customerProfiles.hotelDetails.description,
+  hotel_rating:ratings.averageRating,
 
 
+ }
+  
+      // If no results are found, return an appropriate response
+      if (!customerProfiles || customerProfiles.length === 0) {
+        return res.status(404).json(
+          makeJsonResponse('Not Found', {}, { message: "No hotels found with role owner" }, 404, false)
+        );
+      }
+  
+      // Return the list of customer profiles
+      return res.status(200).json(
+        makeJsonResponse('Success', { message: "Hotels retrieved successfully", customerProfiles }, {}, 200, true)
+      );
+    } catch (error) {
+      console.error(`Error fetching hotels: ${error.code} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false)
+      );
+    }
+  }
 }
 
 module.exports = customerController

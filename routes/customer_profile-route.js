@@ -22,4 +22,11 @@ router.post(
 )
 
 
+router.get(
+"/hotel-details",
+auth.decodeToken,
+controller.getallhotels
+)
+
+
 module.exports = router
