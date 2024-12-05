@@ -1,6 +1,62 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const adminBannerSchema = new Schema(
+    {
+        heading: {
+            type: String,
+            required: false,
+        },
+        description: {
+            type: String,
+            required: false
+        },
+        image: {
+            type: String,
+            required: false
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    {
+        timestamps: true
+    }
+)
+
+const adminServiceSchema = new Schema(
+    {
+        heading: {
+            type: String,
+            required: false,
+        },
+        description: {
+            type: String,
+            required: false
+        },
+        image: {
+            type: String,
+            required: false
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
+    },
+    {
+        timestamps: true
+    }
+)
+
 const adminSchema = new Schema(
     {
 
@@ -24,9 +80,19 @@ const adminSchema = new Schema(
         role: {
              type: String,
              trim: true,
-             enum: ["admin", "sub_admin"],
-             default: "admin"
-        }
+             enum: ["super_admin", "sub_admin","admin"],
+             default: "super_admin"
+        },
+        banners: [adminBannerSchema],
+        services: [adminServiceSchema],
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
     },
     
     {

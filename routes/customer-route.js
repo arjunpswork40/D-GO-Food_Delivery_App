@@ -10,6 +10,12 @@ const auth = require("../middleware/auth-middleware")
 // )
 
 router.get(
+    "/:page/:limit",
+    auth.decodeToken,
+    controller.getHomeDetails
+)
+
+router.get(
     "/:id",
     auth.decodeToken,
     controller.customerprofile
