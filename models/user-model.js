@@ -4,6 +4,8 @@ const Schema = mongoose.Schema
 const userSchema = new Schema(
     {  
         hotelDetails: {
+            partnerBrand: {type: Boolean, default: false, required: false},
+            priorityIndex: { type: Number,default: 0 },
             name: { type: String, required: false, validate: {
                 validator: (value) => {
                     return /^[a-zA-Z]{2,15}$/.test(value)
@@ -17,10 +19,8 @@ const userSchema = new Schema(
               state: { type: String, required: false },
               country: { type: String, required: false },
               zipcode: { type: String, required: false },
-              coordinates: {
-                lat: { type: Number, required: false },
-                lng: { type: Number, required: false },
-              },
+              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
             },
             contactNumber: { type: String, required: false },
             openingHours: {
@@ -112,10 +112,8 @@ const userSchema = new Schema(
             vehicleNumber: { type: String },
             licenseNumber: { type: String },
             currentLocation: {
-              coordinates: {
-                lat: { type: Number },
-                lng: { type: Number },
-              },
+              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
             },
             status: {
               type: String,
@@ -130,10 +128,8 @@ const userSchema = new Schema(
             savedAddresses: [
               {
                 label: { type: String }, // e.g., "Home", "Work"
-                coordinates: {
-                  lat: { type: Number },
-                  lng: { type: Number },
-                },
+                type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+                coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
                 address: { type: String },
                 city: { type: String },
                 state: { type: String },
@@ -148,6 +144,10 @@ const userSchema = new Schema(
                 status: { type: String, enum: ['pending', 'completed', 'cancelled'] },
               },
             ],
+            currentLocation: {
+              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+            },
           },
 
         order: [
@@ -171,5 +171,8 @@ const userSchema = new Schema(
 )
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
+userSchema.index({ "hotelDetails.location": "2dsphere" });
+userSchema.index({ "hotelDetails.priorityIndex": -1 });
+userSchema.index({ "ratingd.ratings.averageRating": -1 });
 
 module.exports = mongoose.model('Users', userSchema)

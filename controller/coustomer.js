@@ -1,6 +1,9 @@
-const Food = require("../models/food-model")
+const applicationStaticModel = require("../models/application-static-model");
+const Food = require("../models/food-model");
+const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
-const { makeJsonResponse } = require("../utils/response")
+const { makeJsonResponse } = require("../utils/response");
+const { getNearByHotelsWithPaginationAndCurrentLocation, getServiceCategoryDetails, getApplicationBasicDetails } = require("./services/customer/hotel-related-services");
 class customerController {
   static async allFoods(req, res, next) {
     try {
@@ -20,6 +23,55 @@ class customerController {
       // return res.status(200).json(foodDetails)
 
       return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", customerprofile }, {}, 200, true));
+    } catch (error) {
+      console.error(`Error foods: ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async getHomeDetails(req, res, next) {
+    const page = req.params.page || 1;
+    const limit = req.params.limit || 10;
+
+    try {
+      const user = req.user;
+      const applicationDetails = await getApplicationBasicDetails();
+      const serviceCategoryDetails = await getServiceCategoryDetails();
+
+      const maxDistance  = process.env.NEAR_BY_MAX_DISTANCE || "5000";
+      let topPicks = [];
+      try {
+        
+        // fetching hotel by priority index, location and rating
+        topPicks = await getNearByHotelsWithPaginationAndCurrentLocation(user.customerDetails.currentLocation.coordinates, maxDistance, page, limit)
+
+      } catch (err) {
+        console.error("Error finding nearby hotels:", err);
+      }
+
+      const adds = await getAddsByCount(process.env.HOMEPAGE_ADDS_COUNT || 10);
+
+      const mainFoodCategories = await getMainFoodCategoryListByCount(process.env.HOMEPAGE_MAIN_CATEGORY_LIST_COUNT || 10)
+      
+      const spotlight = await getSpotlights(page, limit)
+
+      const adminBannersAndSerivces = await getAdminBannersAndServicesByPagination(page, limit);
+
+      const mainCategories = await getMainCategory(page,limit);
+
+      const finalResult = {
+        topData: applicationDetails,
+        serviceCategoryDetails: serviceCategoryDetails,
+        topPicks: topPicks,
+        adds: adds,
+        mainFoodCategories: mainFoodCategories,
+        spotlight: spotlight,
+        adminBanners: adminBannersAndSerivces.banners,
+        adminServices: adminBannersAndSerivces.services,
+        popularCategories: mainCategories
+      }
+      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 500, false));
+      
     } catch (error) {
       console.error(`Error foods: ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
