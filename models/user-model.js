@@ -4,6 +4,8 @@ const Schema = mongoose.Schema
 const userSchema = new Schema(
     {  
         hotelDetails: {
+            partnerBrand: {type: Boolean, default: false, required: false},
+            priorityIndex: { type: Number,default: 0 },
             name: { type: String, required: false, validate: {
                 validator: (value) => {
                     return /^[a-zA-Z]{2,15}$/.test(value)
@@ -17,9 +19,16 @@ const userSchema = new Schema(
               state: { type: String, required: false },
               country: { type: String, required: false },
               zipcode: { type: String, required: false },
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
               coordinates: {
-                lat: { type: Number, required: false },
-                lng: { type: Number, required: false },
+                type: [Number],  // [longitude, latitude]
+                required: false,
               },
             },
             contactNumber: { type: String, required: false },
@@ -112,9 +121,16 @@ const userSchema = new Schema(
             vehicleNumber: { type: String },
             licenseNumber: { type: String },
             currentLocation: {
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
               coordinates: {
-                lat: { type: Number },
-                lng: { type: Number },
+                type: [Number],  // [longitude, latitude]
+                required: false,
               },
             },
             status: {
@@ -130,9 +146,16 @@ const userSchema = new Schema(
             savedAddresses: [
               {
                 label: { type: String }, // e.g., "Home", "Work"
+                // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+                // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+                type: {
+                  type: String,
+                  enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                  required: false,  // This makes it optional
+                },
                 coordinates: {
-                  lat: { type: Number },
-                  lng: { type: Number },
+                  type: [Number],  // [longitude, latitude]
+                  required: false,
                 },
                 address: { type: String },
                 city: { type: String },
@@ -148,6 +171,19 @@ const userSchema = new Schema(
                 status: { type: String, enum: ['pending', 'completed', 'cancelled'] },
               },
             ],
+            currentLocation: {
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
+              coordinates: {
+                type: [Number],  // [longitude, latitude]
+                required: false,
+              },
+            },
           },
 
         order: [
@@ -171,5 +207,8 @@ const userSchema = new Schema(
 )
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
+userSchema.index({ "hotelDetails.location": "2dsphere" });
+userSchema.index({ "hotelDetails.priorityIndex": -1 });
+userSchema.index({ "ratingd.ratings.averageRating": -1 });
 
 module.exports = mongoose.model('Users', userSchema)
