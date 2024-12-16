@@ -52,148 +52,148 @@ class controller {
 
             try{
 
-            // const generateValidName = () => {
-            //     let name = faker.person.firstName();
-            //     // Ensure name contains only alphabets and is between 2-15 characters
-            //     while (!/^[a-zA-Z]{2,15}$/.test(name)) {
-            //         name = faker.person.firstName();
-            //     }
-            //     return name;
-            // };
+            const generateValidName = () => {
+                let name = faker.person.firstName();
+                // Ensure name contains only alphabets and is between 2-15 characters
+                while (!/^[a-zA-Z]{2,15}$/.test(name)) {
+                    name = faker.person.firstName();
+                }
+                return name;
+            };
             
-            // const generateValidCompanyName = () => {
-            //     let name = faker.person.firstName();
-            //     // Ensure name contains only alphabets and is between 2-15 characters
-            //     while (!/^[a-zA-Z]{2,15}$/.test(name)) {
-            //         name = faker.company.name();
-            //     }
-            //     return name;
-            // };
-            // const generateUniqueEmail = (index) => {
-            //     return faker.internet.email(faker.person.firstName(), faker.lorem.text());
-            // };
+            const generateValidCompanyName = () => {
+                let name = faker.person.firstName();
+                // Ensure name contains only alphabets and is between 2-15 characters
+                while (!/^[a-zA-Z]{2,15}$/.test(name)) {
+                    name = faker.company.name();
+                }
+                return name;
+            };
+            const generateUniqueEmail = (index) => {
+                return faker.internet.email(faker.person.firstName(), faker.lorem.text());
+            };
 
-            // let owners = [];
-            // let offers = [];
-            // let baseCoordinates = [11.399340, 75.956032]; // Reference latitude and longitude
-            // let addsData = [];
-            // let foodMainCategoryData = [];
-            // let appStaticaDataDummy = [];
-            // let serviceCategoryDummy = [];
-            // let subCategories = [];
-            // // Generate Owners
-            // for (let i = 0; i < 2; i++) {
-            //     const partnerBrand = Math.random() > 0.5;
-            //     const coordinates = controller.getRandomCoordinates(baseCoordinates, 10);
+            let owners = [];
+            let offers = [];
+            let baseCoordinates = [11.399340, 75.956032]; // Reference latitude and longitude
+            let addsData = [];
+            let foodMainCategoryData = [];
+            let appStaticaDataDummy = [];
+            let serviceCategoryDummy = [];
+            let subCategories = [];
+            // Generate Owners
+            for (let i = 0; i < 2; i++) {
+                const partnerBrand = Math.random() > 0.5;
+                const coordinates = controller.getRandomCoordinates(baseCoordinates, 10);
                 
-            //     const addsDataExp = new addsModel({
-            //         type: 'banner',
-            //         images: Array.from({ length: 4 }, controller.getRandomImage),
-            //         tagline: faker.lorem.sentence(),
-            //     })
-            //     addsData.push(addsDataExp)
-            //     const foodMainCategoryExp = new foodMainCategory({
-            //         name:generateValidCompanyName(),
-            //         description: faker.lorem.sentence(),
-            //         images: Array.from({ length: 4 }, controller.getRandomImage),
-            //     })
-            //     foodMainCategoryData.push(foodMainCategoryExp);
+                const addsDataExp = new addsModel({
+                    type: 'banner',
+                    images: Array.from({ length: 4 }, controller.getRandomImage),
+                    tagline: faker.lorem.sentence(),
+                })
+                addsData.push(addsDataExp)
+                const foodMainCategoryExp = new foodMainCategory({
+                    name:generateValidCompanyName(),
+                    description: faker.lorem.sentence(),
+                    images: Array.from({ length: 4 }, controller.getRandomImage),
+                })
+                foodMainCategoryData.push(foodMainCategoryExp);
 
-            //     const appStaticaDataExp = new applicationStaticModel({
-            //         heading: faker.company.catchPhrase(),
-            //         description: faker.lorem.sentence(),
-            //     })
-            //     appStaticaDataDummy.push(appStaticaDataExp)
-            //     const owner = new User({
-            //         hotelDetails: {
-            //             partnerBrand,
-            //             priorityIndex: faker.number.int({ min: 1, max: 100 }),
-            //             name: generateValidName(),
-            //             description: faker.lorem.sentence(),
-            //             location: {
-            //                 address: faker.address.streetAddress(),
-            //                 city: faker.address.city(),
-            //                 state: faker.address.state(),
-            //                 zipcode: faker.address.zipCode(),
-            //                 type: 'Point',
-            //                 coordinates
-            //             },
-            //             contactNumber: faker.phone.number(),
-            //             openingHours: {
-            //                 open: '10:00 AM',
-            //                 close: '10:00 PM'
-            //             },
-            //             images: {
-            //                 hotelImages: Array.from({ length: 4 }, controller.getRandomImage),
-            //                 menuImages: Array.from({ length: 3 }, controller.getRandomImage),
-            //                 hotelMainImage: Array.from({ length: 2 }, controller.getRandomImage),
-            //             }
-            //         },
-            //         ratings: {
-            //             averageRating: faker.number.float({ min: 1, max: 5 }),
-            //             totalRatings: faker.number.float({ min: 0, max: 2 }),
-            //         },
-            //         status: 'approved',
-            //         name: generateValidName(),
-            //         email: generateUniqueEmail(),
-            //         password: passAuth.hashPassword('1234'),
-            //         role: 'owner'
-            //     });
-            //     owners.push(owner);
-            //     const serviceCategoryExp =new serviceCategoryModel({
-            //         title: faker.company.catchPhrase(),
-            //         description: faker.lorem.sentence(),
-            //         main_image: 'hotel/lll.jpg',
-            //     })
-            //     serviceCategoryDummy.push(serviceCategoryExp)
-            //     console.log('loop = '+i)
-            // }
-            // const uniqueOwners = Array.from(new Set(owners.map(a => a.email)))
-            // .map(email => owners.find(a => a.email === email));
-            // const savedOwners = await User.insertMany(uniqueOwners);
-            // console.log('owners saved');
+                const appStaticaDataExp = new applicationStaticModel({
+                    heading: faker.company.catchPhrase(),
+                    description: faker.lorem.sentence(),
+                })
+                appStaticaDataDummy.push(appStaticaDataExp)
+                const owner = new User({
+                    hotelDetails: {
+                        partnerBrand,
+                        priorityIndex: faker.number.int({ min: 1, max: 100 }),
+                        name: generateValidName(),
+                        description: faker.lorem.sentence(),
+                        location: {
+                            address: faker.address.streetAddress(),
+                            city: faker.address.city(),
+                            state: faker.address.state(),
+                            zipcode: faker.address.zipCode(),
+                            type: 'Point',
+                            coordinates
+                        },
+                        contactNumber: faker.phone.number(),
+                        openingHours: {
+                            open: '10:00 AM',
+                            close: '10:00 PM'
+                        },
+                        images: {
+                            hotelImages: Array.from({ length: 4 }, controller.getRandomImage),
+                            menuImages: Array.from({ length: 3 }, controller.getRandomImage),
+                            hotelMainImage: Array.from({ length: 2 }, controller.getRandomImage),
+                        }
+                    },
+                    ratings: {
+                        averageRating: faker.number.float({ min: 1, max: 5 }),
+                        totalRatings: faker.number.float({ min: 0, max: 2 }),
+                    },
+                    status: 'approved',
+                    name: generateValidName(),
+                    email: generateUniqueEmail(),
+                    password: passAuth.hashPassword('1234'),
+                    role: 'owner'
+                });
+                owners.push(owner);
+                const serviceCategoryExp =new serviceCategoryModel({
+                    title: faker.company.catchPhrase(),
+                    description: faker.lorem.sentence(),
+                    main_image: 'hotel/lll.jpg',
+                })
+                serviceCategoryDummy.push(serviceCategoryExp)
+                console.log('loop = '+i)
+            }
+            const uniqueOwners = Array.from(new Set(owners.map(a => a.email)))
+            .map(email => owners.find(a => a.email === email));
+            const savedOwners = await User.insertMany(uniqueOwners);
+            console.log('owners saved');
 
-            // // Generate Offers
-            // savedOwners.forEach(owner => {
-            //     const numberOfOffers = faker.number.int({ min: 1, max: 5 }); // Random number of offers per owner (1 to 5)
-            //     for (let j = 0; j < numberOfOffers; j++) {
-            //         const offer = new offerModel({
-            //             deductionAmount: faker.number.int({ min: 10, max: 500 }),
-            //             name: faker.commerce.productName(),
-            //             ownerId: owner._id,
-            //             mainOffer: Math.random() > 0.5,
-            //         });
-            //         offers.push(offer);
-            //     }
-            // });
-            // const savedMainCategory = await foodMainCategory.insertMany(foodMainCategoryData)
-            // console.log('food main category saved');
+            // Generate Offers
+            savedOwners.forEach(owner => {
+                const numberOfOffers = faker.number.int({ min: 1, max: 5 }); // Random number of offers per owner (1 to 5)
+                for (let j = 0; j < numberOfOffers; j++) {
+                    const offer = new offerModel({
+                        deductionAmount: faker.number.int({ min: 10, max: 500 }),
+                        name: faker.commerce.productName(),
+                        ownerId: owner._id,
+                        mainOffer: Math.random() > 0.5,
+                    });
+                    offers.push(offer);
+                }
+            });
+            const savedMainCategory = await foodMainCategory.insertMany(foodMainCategoryData)
+            console.log('food main category saved');
 
-            // for (let i = 0; i < 2; i++) {
-            //     const owner = faker.helpers.arrayElement(savedOwners);
-            //     const mainCategory = faker.helpers.arrayElement(savedMainCategory);
-            //     const subCategory = new foodSubCategory({
-            //         name: faker.commerce.productName(),
-            //         description: faker.lorem.sentence(),
-            //         mainCategoryId: mainCategory._id,
-            //         ownerId: owner._id,
-            //         images: Array.from({ length: 3 }, controller.getRandomImage),
-            //     });
+            for (let i = 0; i < 2; i++) {
+                const owner = faker.helpers.arrayElement(savedOwners);
+                const mainCategory = faker.helpers.arrayElement(savedMainCategory);
+                const subCategory = new foodSubCategory({
+                    name: faker.commerce.productName(),
+                    description: faker.lorem.sentence(),
+                    mainCategoryId: mainCategory._id,
+                    ownerId: owner._id,
+                    images: Array.from({ length: 3 }, controller.getRandomImage),
+                });
     
-            //     subCategories.push(subCategory);
-            // }
+                subCategories.push(subCategory);
+            }
             
             
 
-            // await foodSubCategory.insertMany(subCategories);    
-            // await offerModel.insertMany(offers);
-            // console.log('offers saved');
-            // await addsModel.insertMany(addsData);
-            // console.log('adds saved');
-            // await applicationStaticModel.insertMany(appStaticaDataDummy);
+            await foodSubCategory.insertMany(subCategories);    
+            await offerModel.insertMany(offers);
+            console.log('offers saved');
+            await addsModel.insertMany(addsData);
+            console.log('adds saved');
+            await applicationStaticModel.insertMany(appStaticaDataDummy);
             
-            // console.log('static data saved');
-            // await serviceCategoryModel.insertMany(serviceCategoryDummy)
+            console.log('static data saved');
+            await serviceCategoryModel.insertMany(serviceCategoryDummy)
             console.log('service category data saved');
             let cc = new User({
                 name: 'Arjusnss',
@@ -207,7 +207,6 @@ class controller {
                     }
                 }
             });
-            console.log(cc,'fffff')
             await cc.save();
 
             return res.status(200).json(makeJsonResponse('Success', {}, { message: "completed" }, 200, true));
