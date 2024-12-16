@@ -113,7 +113,7 @@ const userSchema = new Schema(
             licenseNumber: { type: String },
             currentLocation: {
               type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitu  de]
             },
             status: {
               type: String,
@@ -130,7 +130,7 @@ const userSchema = new Schema(
                 label: { type: String }, // e.g., "Home", "Work"
                 type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
                 coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
-                address: { type: String },
+                address: { type: String },  
                 city: { type: String },
                 state: { type: String },
                 country: { type: String },

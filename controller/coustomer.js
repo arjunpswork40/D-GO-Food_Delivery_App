@@ -188,7 +188,7 @@ class customerController {
             ],
             as: "mainOffer", // Name of the array field for joined offers
           },
-
+ 
         },
         {
 
