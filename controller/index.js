@@ -82,7 +82,7 @@ class controller {
             let serviceCategoryDummy = [];
             let subCategories = [];
             // Generate Owners
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 1000; i++) {
                 const partnerBrand = Math.random() > 0.5;
                 const coordinates = controller.getRandomCoordinates(baseCoordinates, 10);
                 
@@ -126,7 +126,7 @@ class controller {
                         images: {
                             hotelImages: Array.from({ length: 4 }, controller.getRandomImage),
                             menuImages: Array.from({ length: 3 }, controller.getRandomImage),
-                            hotelMainImage: Array.from({ length: 2 }, controller.getRandomImage),
+                            hotelMainImage: Array.from({ length: 1000 }, controller.getRandomImage),
                         }
                     },
                     ratings: {
@@ -169,7 +169,7 @@ class controller {
             const savedMainCategory = await foodMainCategory.insertMany(foodMainCategoryData)
             console.log('food main category saved');
 
-            for (let i = 0; i < 2; i++) {
+            for (let i = 0; i < 1000; i++) {
                 const owner = faker.helpers.arrayElement(savedOwners);
                 const mainCategory = faker.helpers.arrayElement(savedMainCategory);
                 const subCategory = new foodSubCategory({
@@ -195,19 +195,19 @@ class controller {
             console.log('static data saved');
             await serviceCategoryModel.insertMany(serviceCategoryDummy)
             console.log('service category data saved');
-            let cc = new User({
-                name: 'Arjusnss',
-                email: 'arj@arj.com',
-                password: passAuth.hashPassword('1234'),
-                role: 'customer',
-                customerDetails: {
-                    currentLocation: {
-                        type: 'Point',
-                        coordinates: [11.399340, 75.956032],
-                    }
-                }
-            });
-            await cc.save();
+            // let cc = new User({
+            //     name: 'Arjusnss',
+            //     email: 'arj@arj.com',
+            //     password: passAuth.hashPassword('1234'),
+            //     role: 'customer',
+            //     customerDetails: {
+            //         currentLocation: {
+            //             type: 'Point',
+            //             coordinates: [11.399340, 75.956032],
+            //         }
+            //     }
+            // });
+            // await cc.save();
 
             return res.status(200).json(makeJsonResponse('Success', {}, { message: "completed" }, 200, true));
         
