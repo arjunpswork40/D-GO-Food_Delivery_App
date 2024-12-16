@@ -3,19 +3,36 @@ const Food = require("../models/food-model");
 const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
 const { makeJsonResponse } = require("../utils/response");
-const { getNearByHotelsWithPaginationAndCurrentLocation, getServiceCategoryDetails, getApplicationBasicDetails } = require("./services/customer/hotel-related-services");
+const { 
+  getNearByHotelsWithPaginationAndCurrentLocation,
+  getSpotlights,
+  getMainFoodCategoryListByCount, 
+  getServiceCategoryDetails, 
+  getApplicationBasicDetails, 
+  getAddsByCount,
+  getAllNearByHotels,
+  getPopularHotels,
+  getOffersWithHotelDetails,
+  getPopularBrands
+} = require("./services/customer/hotel-related-services");
+const {
+  getAdminBannersAndServicesByPagination,
+  getMainCategory
+} = require("./services/admin/admin-related-services")
 class customerController {
+
   static async allFoods(req, res, next) {
     try {
       const allFoods = await Food.find({ available: true })
       // return res.status(200).json(allFoods)
       return res.status(200).json(makeJsonResponse('Success', { message: "All foos ", allFoods }, {}, 200, true));
     } catch (error) {
-      console.error(`Error foods: ${error.code} - ${error.message}`);
+      console.error(`Error foods:1 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
+  
   static async customerprofile(req, res, next) {
     try {
       const customerId = req.params.id;
@@ -24,34 +41,41 @@ class customerController {
 
       return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", customerprofile }, {}, 200, true));
     } catch (error) {
-      console.error(`Error foods: ${error.code} - ${error.message}`);
-      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
+      console.error(`Error foods:2 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
   static async getHomeDetails(req, res, next) {
-    const page = req.params.page || 1;
-    const limit = req.params.limit || 10;
+    const page = Number(req.params.page || 1);
+    const limit = Number(req.params.limit || 10);
 
     try {
       const user = req.user;
       const applicationDetails = await getApplicationBasicDetails();
       const serviceCategoryDetails = await getServiceCategoryDetails();
-
       const maxDistance  = process.env.NEAR_BY_MAX_DISTANCE || "5000";
       let topPicks = [];
+      let allRestaurantsNearBy = [];
+      let popularBrands = [];
       try {
-        
-        // fetching hotel by priority index, location and rating
-        topPicks = await getNearByHotelsWithPaginationAndCurrentLocation(user.customerDetails.currentLocation.coordinates, maxDistance, page, limit)
+        if(user.customerDetails.currentLocation.coordinates){
+          // fetching hotel by priority index, location and rating
+          topPicks = await getNearByHotelsWithPaginationAndCurrentLocation(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit)
 
+          // fetching hotels along with offer details based on currentLocation of user
+          allRestaurantsNearBy = await getAllNearByHotels(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit)
+
+          popularBrands = await getPopularBrands(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit);
+
+        }
       } catch (err) {
         console.error("Error finding nearby hotels:", err);
       }
 
-      const adds = await getAddsByCount(process.env.HOMEPAGE_ADDS_COUNT || 10);
-
-      const mainFoodCategories = await getMainFoodCategoryListByCount(process.env.HOMEPAGE_MAIN_CATEGORY_LIST_COUNT || 10)
+      const adds = await getAddsByCount(Number(process.env.HOMEPAGE_ADDS_COUNT || 10));
+      
+      const mainFoodCategories = await getMainFoodCategoryListByCount(Number(process.env.HOMEPAGE_MAIN_CATEGORY_LIST_COUNT || 10));
       
       const spotlight = await getSpotlights(page, limit)
 
@@ -59,6 +83,10 @@ class customerController {
 
       const mainCategories = await getMainCategory(page,limit);
 
+      const popularRestaurants = await getPopularHotels(page, limit);
+
+      const topOffers = await getOffersWithHotelDetails(page,limit);
+      
       const finalResult = {
         topData: applicationDetails,
         serviceCategoryDetails: serviceCategoryDetails,
@@ -66,15 +94,20 @@ class customerController {
         adds: adds,
         mainFoodCategories: mainFoodCategories,
         spotlight: spotlight,
-        adminBanners: adminBannersAndSerivces.banners,
-        adminServices: adminBannersAndSerivces.services,
-        popularCategories: mainCategories
+        adminBanners: adminBannersAndSerivces ?  adminBannersAndSerivces.banners : [],
+        adminServices: adminBannersAndSerivces ? adminBannersAndSerivces.services: [],
+        popularCategories: mainCategories,
+        allRestaurantsNearBy: allRestaurantsNearBy,
+        popularBrands: popularBrands,
+        popularRestaurants: popularRestaurants,
+        topOffers: topOffers
       }
-      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 500, false));
+      
+      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 200, false));
       
     } catch (error) {
-      console.error(`Error foods: ${error.code} - ${error.message}`);
-      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
+      console.error(`Error foods:3 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error3', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
@@ -153,7 +186,7 @@ class customerController {
     } catch (error) {
         console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
         return res.status(500).json(
-            makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false)
+            makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false)
         );
     }
   }

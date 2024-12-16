@@ -24,21 +24,32 @@ class authorisation {
 
     static async decodeToken( req, res, next ) {
         const token = await authorisation.getToken(req)
-
         try {
             const decoded = jwt.verify(token, TOKEN_KEY)
             console.log({"email": decoded.email,"role":decoded.role});
             
             const user = await User.findOne({"email": decoded.email,"role":decoded.role})
-            if (!user) throw Error("User Doesnt't Exist Boss Mi")
-            if (user._id != decoded._id) throw Error("Wrong token, boss get a valid token")
+            if (!user) {
+                let response = makeJsonResponse(`User Doesnt't Exist`, {}, {message: "User Doesnt't Exist"}, 401, false);
+                return await res.status(401).json(response);
+            }
+            if (user._id != decoded._id) {
+                let response = makeJsonResponse(`Wrong token, boss get a valid token`, {}, {message: "Wrong token, boss get a valid token"}, 401, false);
+                return await res.status(401).json(response);
+            }
             req.user = user
             next()
             
         } catch (error) {
-            console.log(error);
-            
-            let response = makeJsonResponse(`Unauthenticated API request`, {}, {message: error.message ?? "Login expired"}, 401, false);
+            let message = 'Verification failed';
+            if (error.name === "TokenExpiredError") {
+                message = 'Token has expired';
+            } else if (error.name === "JsonWebTokenError") {
+                message = 'Invalid token';
+            } else if (error.name === "NotBeforeError") {
+                message = 'Token not active yet';
+            } 
+            let response = makeJsonResponse(`Unauthenticated API request`, {}, {message}, 401, false);
             return await res.status(401).json(response);
             // next(error)
         }

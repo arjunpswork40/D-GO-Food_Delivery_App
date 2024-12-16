@@ -85,6 +85,10 @@ router.use(
 )
 
 
+router.get(
+    "/insert-dummy-data",
+    controller.dummyData
+)
 
 
 router.get(

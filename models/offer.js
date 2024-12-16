@@ -14,8 +14,13 @@ const offerSchema = new Schema(
         },
         ownerId: {
             type: Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Users',
             required: true
+        },
+        mainOffer:{
+            type: Boolean,
+            required: false,
+            default: false
         },
         createdAt: {
             type: Date,

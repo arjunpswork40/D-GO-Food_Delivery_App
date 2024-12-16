@@ -8,11 +8,6 @@ const serviceCategorySchema = new Schema(
             type: String,
             required: true
         },
-        mainOffer:{
-            type: Boolean,
-            required: false,
-            default: false
-        },
         description: {
             type: String,
             required: true

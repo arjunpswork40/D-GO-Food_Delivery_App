@@ -19,8 +19,17 @@ const userSchema = new Schema(
               state: { type: String, required: false },
               country: { type: String, required: false },
               zipcode: { type: String, required: false },
-              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
+              coordinates: {
+                type: [Number],  // [longitude, latitude]
+                required: false,
+              },
             },
             contactNumber: { type: String, required: false },
             openingHours: {
@@ -112,8 +121,17 @@ const userSchema = new Schema(
             vehicleNumber: { type: String },
             licenseNumber: { type: String },
             currentLocation: {
-              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
+              coordinates: {
+                type: [Number],  // [longitude, latitude]
+                required: false,
+              },
             },
             status: {
               type: String,
@@ -128,8 +146,17 @@ const userSchema = new Schema(
             savedAddresses: [
               {
                 label: { type: String }, // e.g., "Home", "Work"
-                type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-                coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+                // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+                // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+                type: {
+                  type: String,
+                  enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                  required: false,  // This makes it optional
+                },
+                coordinates: {
+                  type: [Number],  // [longitude, latitude]
+                  required: false,
+                },
                 address: { type: String },
                 city: { type: String },
                 state: { type: String },
@@ -145,8 +172,17 @@ const userSchema = new Schema(
               },
             ],
             currentLocation: {
-              type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-              coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+              // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+              type: {
+                type: String,
+                enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+                required: false,  // This makes it optional
+              },
+              coordinates: {
+                type: [Number],  // [longitude, latitude]
+                required: false,
+              },
             },
           },
 
