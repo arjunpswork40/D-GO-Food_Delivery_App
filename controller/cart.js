@@ -1,6 +1,6 @@
 const Cart = require("../models/cart-model")
 const Food = require("../models/food-model")
-
+const { makeJsonResponse } = require("../utils/response")
 class CartClass {
   static async addToCart(req, res, next) {
     try {
@@ -26,14 +26,19 @@ class CartClass {
             foodId: foundFood,
             qty: qty
           }).save()
-          return res.status(201).json(`${foundFood.name} was added successfully`) 
+          // return res.status(201).json(`${foundFood.name} was added successfully`) 
+
+     return res.status(200).json(makeJsonResponse('Success', { message: `${foundFood.name}was added successfully`},{}, 200, true));
+
+
         }
       }
 
       return res.status(501).json(`this isnt implemented as you have ${foundFood.name} in your cart before`)
     
     } catch (error) {
-      next(error)
+      console.error(`Error foods: ${error.code} - ${error.message}`);
+            return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
@@ -41,9 +46,11 @@ class CartClass {
     try {
       const userId = req.user
       const findUsersCart = await Cart.find({userId: userId._id})
-      return res.status(200).json(findUsersCart)
+      // return res.status(200).json(findUsersCart)
+      return res.status(200).json(makeJsonResponse('Success', { message: "All cart",findUsersCart},{}, 200, true));
     } catch (error) {
-      next(error)
+      console.error(`Error foods: ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
@@ -63,12 +70,16 @@ class CartClass {
           await findCart.updateOne({
             qty: newQty
           })
-         return res.status(201).json(`${findCart.foodId} qty was updated to ${newQty}`)
+        //  return res.status(201).json(`${findCart.foodId} qty was updated to ${newQty}`)
+
+         return res.status(200).json(makeJsonResponse('Success', { message: `${findCart.foodId} qty was updated to ${newQty}`},{}, 200, true));
+
         }
       }
       return res.status(200).json("in it really state nothing happened")
     } catch (error) {
-      next(error)
+      console.error(`Error foods: ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
@@ -84,12 +95,16 @@ class CartClass {
 
       if (checkCart.length !== 0 && checkCart !== undefined && checkCart !== null) {
         await Cart.deleteOne({_id : checkCart[0]._id.toString()})
-        return res.status(201).json(`${checkCart[0].foodId} was removed from cart`)
+        // return res.status(201).json(`${checkCart[0].foodId} was removed from cart`)
+
+
+        return res.status(200).json(makeJsonResponse('Success', { message: `${checkCart[0].foodId} was removed from cart`},{}, 200, true));
       }
      
       return res.status(200).json("looks like the item was not found")
     } catch (error) {
-      next(error)
+      console.error(`Error foods: ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   } 
 }

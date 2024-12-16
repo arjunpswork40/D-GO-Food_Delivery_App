@@ -7,6 +7,7 @@ const extensionMimeMappings = {
 };
 const fs = require('fs');
 const path = require('path');
+const FileType = require("file-type");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -110,9 +111,14 @@ const categorySubCategoryImageUpload = multer({
 
 module.exports = {
   uploadMultipleFiles: (fileName, allowedExtensions, uploadPath) => {
+    
+    const rootUploadPath = path.join(uploadPath);
+    if (!fs.existsSync(rootUploadPath)) {
+        fs.mkdirSync(rootUploadPath, { recursive: true }); // Creates the directory if it doesn't exist
+    }
     const storage = multer.diskStorage({
       destination: (req, file, cb) => {
-        cb(null, uploadPath);
+        cb(null, rootUploadPath);
       },
       //set name for uploaded file
       filename: (req, file, cb) => {
@@ -122,17 +128,19 @@ module.exports = {
         cb(null, Math.random() + "." + fileExtension);
       },
     });
-    const fileFilter = (req, file, cb) => {
-      //check file size type etc
-      const mimeType = file.mimetype;
-      if (allowedExtensions.includes(mimeType)) {
-        cb(null, true);
-      } else {
-        const selectedFieldName = file.fieldname;
-        cb(new Error(selectedFieldName + " : selected file types are not allowed"), false);
-      }
-    };
-    return multer({ storage, fileFilter });
+    // const fileFilter = async (req, file, cb) => {
+    //   //check file size type etc
+    //   const mimeType = file.mimetype;
+  
+    //   if (allowedExtensions.includes(mimeType)) {
+    //     cb(null, true);
+    //   } else {
+    //     const selectedFieldName = file.fieldname;
+    //     cb(new Error(selectedFieldName + " : selected file types are not allowed"), false);
+    //   }
+    // };
+    // return multer({ storage, fileFilter });
+    return multer({ storage });
   },
   uploadSingleFile: (fileName, maxFileSize, allowedExtensions = [], uploadPath) => {
     const storage = multer.diskStorage({
