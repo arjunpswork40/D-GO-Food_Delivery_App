@@ -82,7 +82,7 @@ class controller {
             let serviceCategoryDummy = [];
             let subCategories = [];
             // Generate Owners
-            for (let i = 0; i < 1000; i++) {
+            for (let i = 0; i < 30; i++) {
                 const partnerBrand = Math.random() > 0.5;
                 const coordinates = controller.getRandomCoordinates(baseCoordinates, 10);
                 
@@ -126,7 +126,7 @@ class controller {
                         images: {
                             hotelImages: Array.from({ length: 4 }, controller.getRandomImage),
                             menuImages: Array.from({ length: 3 }, controller.getRandomImage),
-                            hotelMainImage: Array.from({ length: 1000 }, controller.getRandomImage),
+                            hotelMainImage: Array.from({ length: 2 }, controller.getRandomImage),
                         }
                     },
                     ratings: {
@@ -169,7 +169,7 @@ class controller {
             const savedMainCategory = await foodMainCategory.insertMany(foodMainCategoryData)
             console.log('food main category saved');
 
-            for (let i = 0; i < 1000; i++) {
+            for (let i = 0; i < 30; i++) {
                 const owner = faker.helpers.arrayElement(savedOwners);
                 const mainCategory = faker.helpers.arrayElement(savedMainCategory);
                 const subCategory = new foodSubCategory({
