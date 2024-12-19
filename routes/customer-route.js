@@ -16,6 +16,12 @@ router.get(
 )
 
 router.get(
+    "/search/:page/:limit",
+    auth.decodeToken,
+    controller.search
+)
+
+router.get(
     "/:id",
     auth.decodeToken,
     controller.customerprofile

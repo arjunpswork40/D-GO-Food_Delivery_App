@@ -55,7 +55,7 @@ router.use(
 )
 
 router.use(
-    "/customer_profile",
+    "/customer/profile",
     require("./customer-route.js")
 )
 
