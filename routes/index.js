@@ -56,7 +56,7 @@ router.use(
 
 router.use(
     "/customer_profile",
-    require("./customer_profile-route")
+    require("./customer-route.js")
 )
 
 router.use(
@@ -85,6 +85,10 @@ router.use(
 )
 
 
+router.get(
+    "/insert-dummy-data",
+    controller.dummyData
+)
 
 
 router.get(
