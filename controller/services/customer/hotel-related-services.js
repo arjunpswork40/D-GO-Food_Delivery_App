@@ -9,7 +9,10 @@ module.exports = {
     getNearByHotelsWithPaginationAndCurrentLocation: async (userLocation, maxDistance, page, limit) => {
         try {
             
-            const skip = (page - 1) * limit;
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit)
+            }
 
             const nearbyHotels = await userModel.aggregate([
                 {
@@ -55,10 +58,16 @@ module.exports = {
                     },
                 },
                 {
+                    $skip: options.skip, // Pagination: Skip the first 'n' documents
+                },
+                {
+                    $limit: options.limit, // Pagination: Limit the number of documents
+                },
+                {
                     // Slice the hotelDetails array to get the first `limit` items based on pagination
                     $project: {
                         name: 1,
-                        hotelDetails: { $slice: ["$hotelDetails", skip, limit] },  // Skip and limit for pagination
+                        hotelDetails: { $slice: ["$hotelDetails", options.skip, options.limit] },  // Skip and limit for pagination
                     },
                 },
             ]);
