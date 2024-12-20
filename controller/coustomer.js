@@ -90,7 +90,7 @@ class customerController {
 
       const highlightedHotels = await getHighlightedHotels(page, limit);
       const restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
-      console.log("user.customerDetails.currentLocation.coordinates=>",user.customerDetails.currentLocation.coordinates)
+
       const finalResult = {
         restaurantList: restaurantList,
         highlightedHotels: highlightedHotels,
