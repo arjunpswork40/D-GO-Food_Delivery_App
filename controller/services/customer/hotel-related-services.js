@@ -321,6 +321,30 @@ module.exports = {
         }
     },
 
+    getOfferDetails: async (page, limit) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            let offersData = await offer.find()
+                                        .skip(options.skip)
+                                        .limit(options.limit)
+                                        .select("deductionAmount name ownerId mainOffer tag_line")
+                                        .populate("ownerId", "name hotelDetails.name hotelDetails.description hotelDetails.images.hotelMainImage");
+
+            return offersData;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
     searchHotelsByKeyword: async (keyword, page, limit, customerLocation) => {
         try {
             const query = {
@@ -332,9 +356,6 @@ module.exports = {
                 limit: Number(limit),
             };
 
-            console.log(customerLocation.coordinates,'customerLocation.coordinates');
-            
-    
             const regex = new RegExp(keyword, "i");
     
             const results = await userModel.aggregate([
