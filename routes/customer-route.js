@@ -28,6 +28,12 @@ router.get(
 )
 
 router.get(
+    "/restaurants/:page/:limit",
+    auth.decodeToken,
+    controller.restaurantList
+)
+
+router.get(
     "/:id",
     auth.decodeToken,
     controller.customerprofile
