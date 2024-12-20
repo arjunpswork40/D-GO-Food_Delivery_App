@@ -15,7 +15,9 @@ const {
   getOffersWithHotelDetails,
   getPopularBrands,
   searchHotelsByKeyword,
-  getOfferDetails
+  getOfferDetails,
+  getHighlightedHotels,
+  getHotelByFilter
 } = require("./services/customer/hotel-related-services");
 const {
   getAdminBannersAndServicesByPagination,
@@ -69,6 +71,38 @@ class customerController {
     }
   }
   
+  static async restaurantList(req, res, next) {
+    try {
+      const {
+              page,
+              limit,
+            } = req.params;
+
+      const {
+              offersNearYou,
+              bestSellers,
+              sortByRating,
+              fastDelivery,
+              sortOrder
+            } = req.query;
+
+      const user = req.user;
+
+      const highlightedHotels = await getHighlightedHotels(page, limit);
+      const restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+      console.log("user.customerDetails.currentLocation.coordinates=>",user.customerDetails.currentLocation.coordinates)
+      const finalResult = {
+        restaurantList: restaurantList,
+        highlightedHotels: highlightedHotels,
+      }
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: finalResult }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
   static async customerprofile(req, res, next) {
     try {
       const customerId = req.params.id;

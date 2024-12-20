@@ -4,7 +4,7 @@ const foodMainCategory = require("../../../models/food-main-category");
 const offer = require("../../../models/offer");
 const serviceCategoryModel = require("../../../models/serviceCategory-model");
 const userModel = require("../../../models/user-model");
-const OWNER = require("../../../utils/userRoles")
+const {OWNER} = require("../../../utils/userRoles")
 module.exports = {
     getNearByHotelsWithPaginationAndCurrentLocation: async (userLocation, maxDistance, page, limit) => {
         try {
@@ -339,6 +339,136 @@ module.exports = {
                                         .populate("ownerId", "name hotelDetails.name hotelDetails.description hotelDetails.images.hotelMainImage");
 
             return offersData;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    getHighlightedHotels: async (page, limit) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            let result = await userModel.aggregate([
+                {
+                    $match: {
+                        "hotelDetails" : {
+                            $exists: true
+                        }
+                    } // Ensure documents have hotelDetails.
+                },
+                {
+                    $sort: {
+                        "hotelDetails.partnerBrand": -1, // True (1) comes first, False (0) later
+                        "hotelDetails.priorityIndex": 1 // Ascending order of priorityIndex
+                    }
+                },
+                {
+                    $skip: options.skip // Skip documents for pagination
+                },
+                {
+                    $limit: options.limit // Limit the number of documents per page
+                },
+                { 
+                    $project: { 
+                        "hotelDetails.name": 1,
+                        "hotelDetails.images.hotelMainImage": 1,
+                        "hotelDetails.description": 1,
+                        name: 1 ,
+                    }
+                }
+            ]);
+
+            return result;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    getHotelByFilter: async (page, limit, userCoordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            // Aggregation pipeline
+            const pipeline = [];
+
+            // GeoNear stage for calculating distance
+            if (offersNearYou === "true" || fastDelivery === "true") {
+                const maxDistance = fastDelivery ? 2000 : 10000; // 2 km for fastDelivery, 10 km for offersNearYou
+                const minDistance = offersNearYou ? 5000 : 0; // 5 km for offersNearYou, 0 for fastDelivery
+
+                pipeline.push({
+                    $geoNear: {
+                        near: {
+                            type: "Point",
+                            coordinates: userCoordinates, // [longitude, latitude]
+                        },
+                        distanceField: "distance", // Field to store calculated distance
+                        spherical: true, // Perform spherical calculation
+                        maxDistance: maxDistance,
+                        minDistance: minDistance,
+                        key: "hotelDetails.location.coordinates"
+                    },
+                });
+            } else {
+                // Match stage for other filters
+                pipeline.push({ $match: query });
+            }
+
+            // Add sorting
+            const sort = {
+                "hotelDetails.priorityIndex": -1, // Default sorting by priority index
+            };
+            if (sortByRating === "true") {
+                console.log('p')
+                sort["ratings.averageRating"] = -1; // Sort by average rating
+            }
+            if (sortOrder === "true") {
+                sort["hotelDetails.name"] = sortOrder === "a-z" ? 1 : -1; // Sort by name
+            }
+            if (bestSellers === "true") {
+                sort["order.length"] = -1; // Sort by order count
+            }
+
+            // Sorting stage
+            pipeline.push({ $sort: sort });
+
+            // Add pagination
+            pipeline.push({ $skip: options.skip });
+            pipeline.push({ $limit: options.limit });
+
+            // Projection stage
+            pipeline.push({
+                $project: {
+                    "hotelDetails.name": 1,
+                    "hotelDetails.description": 1,
+                    "hotelDetails.images.hotelMainImage": 1,
+                    ratings: 1,
+                    name: 1,
+                    orderCount: { $size: "$order" }, // Include order count
+                    distance: 1, // Include calculated distance
+                },
+            });
+
+            // Execute the aggregation pipeline
+            const result = await userModel.aggregate(pipeline);
+
+            return result;
         } catch(error) {
             console.error("Error getOfferDetails (from service file):", error);
             return false;
