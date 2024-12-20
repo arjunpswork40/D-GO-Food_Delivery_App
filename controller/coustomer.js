@@ -14,7 +14,8 @@ const {
   getPopularHotels,
   getOffersWithHotelDetails,
   getPopularBrands,
-  searchHotelsByKeyword
+  searchHotelsByKeyword,
+  getOfferDetails
 } = require("./services/customer/hotel-related-services");
 const {
   getAdminBannersAndServicesByPagination,
@@ -42,6 +43,23 @@ class customerController {
       const { keyword } = req.query;      
       const user = req.user;
       const result = await searchHotelsByKeyword(keyword, page, limit, user.customerDetails.currentLocation);
+
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async restaurantOffers(req, res, next) {
+    try {
+      const {
+            page,
+            limit,
+            } = req.params;
+
+      const result = await getOfferDetails(page, limit);
 
       return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
     } catch (error) {

@@ -12,6 +12,10 @@ const offerSchema = new Schema(
             type: String,
             required: true
         },
+        tag_line: {
+            type: String,
+            required: true
+        },
         ownerId: {
             type: Schema.Types.ObjectId,
             ref: 'Users',
