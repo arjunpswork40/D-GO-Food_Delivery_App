@@ -34,6 +34,12 @@ router.get(
 )
 
 router.get(
+    "/account/:page/:limit",
+    auth.decodeToken,
+    controller.accountDetails
+)
+
+router.get(
     "/:id",
     auth.decodeToken,
     controller.customerprofile

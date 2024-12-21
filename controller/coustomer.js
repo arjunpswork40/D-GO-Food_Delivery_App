@@ -17,7 +17,8 @@ const {
   searchHotelsByKeyword,
   getOfferDetails,
   getHighlightedHotels,
-  getHotelByFilter
+  getHotelByFilter,
+  getAccountDetails
 } = require("./services/customer/hotel-related-services");
 const {
   getAdminBannersAndServicesByPagination,
@@ -102,6 +103,24 @@ class customerController {
       return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
+
+  static async accountDetails(req, res, next) {
+    try {
+      const {
+              page,
+              limit,
+            } = req.params;
+      const user = req.user;
+      const accountDetails = await getAccountDetails(user, page, limit);
+    
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: accountDetails }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
 
   static async customerprofile(req, res, next) {
     try {

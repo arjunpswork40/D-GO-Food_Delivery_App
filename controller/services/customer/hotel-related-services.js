@@ -402,6 +402,31 @@ module.exports = {
         }
     },
 
+    getAccountDetails: async(user, page, limit) => {
+        try {
+            let finalResult = {
+                name: user.name,
+                phone: user.phone,
+                email: user.email,
+                bankDetails: user.bankDetails,
+                address: user.address
+            }
+
+            let totalOrders = user.customerDetails.orders;
+
+            const startIndex = (page - 1) * limit; // Calculate the starting index
+            const endIndex = startIndex + limit;       // Calculate the ending index
+            const paginatedOrders =  totalOrders.slice(startIndex, endIndex);  // Slice the array
+            finalResult.orders = paginatedOrders;
+
+            return finalResult;
+            
+        } catch(error) {
+            console.error("Error getAccountDetails (from service file):", error);
+            return false;
+        }
+    },
+
     getHotelByFilter: async (page, limit, userCoordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder) => {
         try {
             const query = {
