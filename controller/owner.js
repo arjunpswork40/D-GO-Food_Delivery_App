@@ -1,6 +1,7 @@
 const User = require("../models/user-model");
 const mongoose = require('mongoose');
 const { makeJsonResponse } = require("../utils/response");
+const userModel = require("../models/user-model");
 
 class Owner {
 
@@ -65,6 +66,206 @@ class Owner {
             return res.status(500).json(makeJsonResponse('Server Error', {}, { message: "An error occurred while deleting the user" }, 500, false));
         }
     }
+
+    static async updateBankDetails(req, res, next) {
+            const { 
+                bankDetailsAccountName,
+                bankDetailsAccountNumber,
+                bankDetailsBankName,
+                bankDetailsIfscCode
+            } = req.body
+
+            const user = req.user;
+
+            try {
+                const updateData = {
+                    bankDetails: {
+                        accountName: bankDetailsAccountName,
+                        accountNumber: bankDetailsAccountNumber,
+                        bankName: bankDetailsBankName,
+                        ifscCode: bankDetailsIfscCode,
+                    },
+                }
+
+                const updatedUser = await userModel.findByIdAndUpdate(
+                                    user._id,
+                                    {
+                                        $set: updateData
+                                    },
+                                    {
+                                        new: true,
+                                        runValidators: true
+                                    }
+                                )
+
+                if (!updatedUser) {
+                    console.log('User not found');
+                    return res.status(404).json(
+                        makeJsonResponse(
+                            'User Not Found', 
+                            { 
+                                message: "User not found" 
+                            },
+                            {},
+                            404,
+                            false
+                        )
+                    );
+                }
+                return res.status(200).json(
+                    makeJsonResponse(
+                        'Success', 
+                        { 
+                            message: "Hotel owner's bank detail updated successfuly",
+                            data: updateData,
+                            user: {
+                                name: user.name,
+                                _id: user._id
+                            } 
+                        },
+                        {},
+                        200,
+                        true
+                    )
+                );
+            } catch(error) {
+                console.log("error in updateBankDetails(controller) :: ",error)
+                return res.status(500).json(
+                    makeJsonResponse(
+                        'Error', 
+                        { 
+                            message: error.message || "Internal error occurred",
+                        },
+                        {},
+                        500,
+                        false
+                    )
+                );
+            }
+    }
+    static async updateHotelDetails(req, res, next) {
+        const {
+            hotelName,
+            hotelDescription,
+            hotelLocationAddress,
+            hotelLocationCity,
+            hotelLocationState,
+            hotelLocationCountry,
+            hotelLocationZipCode,
+            hotelLocationCoordinatesLat,
+            hotelLocationCoordinatesLng,
+            hotelContactNumber,
+            closingHours,
+            openingHours,
+        } = req.body;
+    
+        const hotelImages = req.files?.hotelImages?.map(item => item.path) || [];
+        const menuImages = req.files?.menuImages?.map(item => item.path) || [];
+        const hotelMainImage = req.files?.hotelMainImage?.map(item => item.path) || [];
+    
+        const user = req.user;
+    
+        try {
+            // Fetch the existing user document
+            const existingUser = await userModel.findById(user._id);
+            if (!existingUser) {
+                console.log('User not found');
+                return res.status(404).json(
+                    makeJsonResponse(
+                        'User Not Found',
+                        { message: "User not found" },
+                        {},
+                        404,
+                        false
+                    )
+                );
+            }
+    
+            // Merge existing and new images
+            const updatedHotelImages = [...(existingUser.hotelDetails?.images?.hotelImages || []), ...hotelImages];
+            const updatedMenuImages = [...(existingUser.hotelDetails?.images?.menuImages || []), ...menuImages];
+            const updatedMainImage = [...(existingUser.hotelDetails?.images?.hotelMainImage || []), ...hotelMainImage];
+    
+            // Prepare update data
+            const updateData = {
+                hotelDetails: {
+                    name: hotelName || existingUser.hotelDetails?.name,
+                    description: hotelDescription || existingUser.hotelDetails?.description,
+                    location: {
+                        address: hotelLocationAddress || existingUser.hotelDetails?.location?.address,
+                        city: hotelLocationCity || existingUser.hotelDetails?.location?.city,
+                        state: hotelLocationState || existingUser.hotelDetails?.location?.state,
+                        country: hotelLocationCountry || existingUser.hotelDetails?.location?.country,
+                        zipcode: hotelLocationZipCode || existingUser.hotelDetails?.location?.zipcode,
+                        type: "Point",
+                        coordinates: [
+                            parseFloat(hotelLocationCoordinatesLat || existingUser.hotelDetails?.location?.coordinates?.lat),
+                            parseFloat(hotelLocationCoordinatesLng || existingUser.hotelDetails?.location?.coordinates?.lng),
+                        ],
+                    },
+                    contactNumber: hotelContactNumber || existingUser.hotelDetails?.contactNumber,
+                    openingHours: {
+                        open: openingHours || existingUser.hotelDetails?.openingHours?.open,
+                        close: closingHours || existingUser.hotelDetails?.openingHours?.close,
+                    },
+                    images: {
+                        hotelImages: updatedHotelImages,
+                        menuImages: updatedMenuImages,
+                        hotelMainImage: updatedMainImage,
+                    },
+                },
+            };
+    
+            // Update user document
+            const updatedUser = await userModel.findByIdAndUpdate(
+                user._id,
+                { $set: updateData },
+                { new: true, runValidators: true }
+            );
+    
+            if (!updatedUser) {
+                console.log('User not found');
+                return res.status(404).json(
+                    makeJsonResponse(
+                        'User Not Found',
+                        { message: "User not found" },
+                        {},
+                        404,
+                        false
+                    )
+                );
+            }
+    
+            return res.status(200).json(
+                makeJsonResponse(
+                    'Success',
+                    {
+                        message: "Hotel details updated successfully",
+                        data: updateData,
+                        user: {
+                            name: user.name,
+                            _id: user._id,
+                        },
+                    },
+                    {},
+                    200,
+                    true
+                )
+            );
+        } catch (error) {
+            console.log("Error in updateHotelDetails(controller) :: ", error);
+            return res.status(500).json(
+                makeJsonResponse(
+                    'Error',
+                    { message: error.message || "Internal error occurred" },
+                    {},
+                    500,
+                    false
+                )
+            );
+        }
+    }
+    
 }
 
 module.exports = Owner;

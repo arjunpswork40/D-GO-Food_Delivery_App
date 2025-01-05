@@ -365,33 +365,34 @@ class controller {
             email,
             phone,
             hotelName,
-            hotelDescription,
-            hotelLocationAddress,
-            hotelLocationCity,
-            hotelLocationState,
-            hotelLocationCountry,
-            hotelLocationZipCode,
+            // hotelDescription,
+            // hotelLocationAddress,
+            // hotelLocationCity,
+            // hotelLocationState,
+            // hotelLocationCountry,
+            // hotelLocationZipCode,
             hotelLocationCoordinatesLat,
             hotelLocationCoordinatesLng,
-            hotelContactNumber,
-            closingHours,
-            openingHours,
-            bankDetailsAccountName,
-            bankDetailsAccountNumber,
-            bankDetailsBankName,
-            bankDetailsIfscCode
+            // hotelContactNumber,
+            // closingHours,
+            // openingHours,
+            // bankDetailsAccountName,
+            // bankDetailsAccountNumber,
+            // bankDetailsBankName,
+            // bankDetailsIfscCode
         } = req.body
 
-        const hotelImages = req.files?.hotelImages?.length > 0
-            ? req.files.hotelImages.map(item => item.path)
-            : [];
-        const menuImages = req.files?.menuImages?.length > 0
-            ? req.files.menuImages.map(item => item.path)
-            : [];
+        // const hotelImages = req.files?.hotelImages?.length > 0
+        //     ? req.files.hotelImages.map(item => item.path)
+        //     : [];
+        // const menuImages = req.files?.menuImages?.length > 0
+        //     ? req.files.menuImages.map(item => item.path)
+        //     : [];
         const hotelMainImage = req.files?.hotelMainImage?.length > 0
             ? req.files.hotelMainImage.map(item => item.path)
             : [];
-
+        console.log("req.files===>",req.files)
+        console.log(hotelMainImage,"<==hotelMainImage")
         try {
             // Check if required fields are provided
             if (!name || !email || !password) {
@@ -404,7 +405,11 @@ class controller {
             if (existingUser) {
                 return res.status(406).json(makeJsonResponse('Not Acceptable', {}, { message: "This user already exists" }, 406, false));
             }
-
+            let coordinates= [
+                hotelLocationCoordinatesLng,
+                hotelLocationCoordinatesLat
+            ]
+            console.log(coordinates)
             // Hash the password and create the user in one go
             const newUser = new User({
                 name,
@@ -412,34 +417,35 @@ class controller {
                 email,
                 role: "owner",
                 phone: phone,
-                bankDetails: {
-                    accountName: bankDetailsAccountName,
-                    accountNumber: bankDetailsAccountNumber,
-                    bankName: bankDetailsBankName,
-                    ifscCode: bankDetailsIfscCode,
-                },
+                // bankDetails: {
+                //     accountName: bankDetailsAccountName,
+                //     accountNumber: bankDetailsAccountNumber,
+                //     bankName: bankDetailsBankName,
+                //     ifscCode: bankDetailsIfscCode,
+                // },
                 hotelDetails: {
                     name: hotelName,
-                    description: hotelDescription,
+                    // description: hotelDescription,
                     location: {
-                        address: hotelLocationAddress,
-                        city: hotelLocationCity,
-                        state: hotelLocationState,
-                        country: hotelLocationCountry,
-                        zipcode: hotelLocationZipCode,
-                        coordinates: {
-                            lat: hotelLocationCoordinatesLat,
-                            lng: hotelLocationCoordinatesLng,
-                        },
+                        // address: hotelLocationAddress,
+                        // city: hotelLocationCity,
+                        // state: hotelLocationState,
+                        // country: hotelLocationCountry,
+                        // zipcode: hotelLocationZipCode,
+                        type: "Point",
+                        coordinates: [
+                            parseFloat(hotelLocationCoordinatesLng),
+                            parseFloat(hotelLocationCoordinatesLat),
+                        ],
                     },
-                    contactNumber: hotelContactNumber,
-                    openingHours: {
-                        open: openingHours,
-                        close: closingHours
-                    },
+                    // contactNumber: hotelContactNumber,
+                    // openingHours: {
+                    //     open: openingHours,
+                    //     close: closingHours
+                    // },
                     images: {
-                        hotelImages: hotelImages, // URLs or paths to hotel images
-                        menuImages: menuImages, // URLs or paths to menu images
+                        // hotelImages: hotelImages, // URLs or paths to hotel images
+                        // menuImages: menuImages, // URLs or paths to menu images
                         hotelMainImage: hotelMainImage
                     },
                 }

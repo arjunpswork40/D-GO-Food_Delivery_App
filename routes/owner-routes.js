@@ -5,15 +5,29 @@ const auth = require("../middleware/auth-middleware")
 const { uploadMultipleFiles } = require("../utils/fileUploader")
 const {isFilesExist} = require("../middleware/fileChecker")
 const path=require("path")
+const {ownerBankDetailsValidator} = require("../middleware/validator/owner-bank-details-validator")
+const {hotelDetailsValidator} = require("../middleware/validator/owner-hotel-details-validator")
+const multer = require("multer");
 
 const existingPath=path.resolve("./uploads")
 
-const multipleFileUploader = uploadMultipleFiles(
-    "",
-    ["image/png", "image/jpeg", "image/jpg"],
-    existingPath
-  );
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, "uploads/hotel"); // Upload directory
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, file.fieldname + "-" + uniqueSuffix + "-" + file.originalname);
+    },
+  });
 
+  const uploads = multer({ storage });
+
+  const uploadFields = uploads.fields([
+    { name: "hotelImages", maxCount: 10 },
+    { name: "menuImages", maxCount: 10 },
+    { name: "hotelMainImage", maxCount: 1 },
+  ]);
 
 router.get(
     "/:id",
@@ -25,5 +39,20 @@ router.delete(
     "/:id",
     auth.decodeToken,
     controller.deleteUser
+)
+
+router.post(
+    "/bank-details",
+    auth.decodeToken,
+    ownerBankDetailsValidator,
+    controller.updateBankDetails
+)
+
+router.post(
+    "/hotel-details",
+    auth.decodeToken,
+    uploadFields,
+    hotelDetailsValidator,
+    controller.updateHotelDetails
 )
 module.exports = router
