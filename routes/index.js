@@ -6,8 +6,6 @@ const {hotelOwnerValidationRules} = require("../middleware/validator/owner-regis
 const {customerRegistrationValidator} = require("../middleware/validator/customer-registration-validator.js")
 const path = require('path');
 const multer = require("multer");
-const transaction = require('../models/transaction.js')
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // const { uploadMultipleFiles,uploadSingleFile } = require("../utils/fileUploader")
 const existingPath=path.resolve("./uploads/hotel")
