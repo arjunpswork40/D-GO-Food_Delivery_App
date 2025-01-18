@@ -3,8 +3,11 @@ const router = express.Router()
 const controller = require("../controller/index")
 const  auth = require("../middleware/auth-middleware")
 const {hotelOwnerValidationRules} = require("../middleware/validator/owner-registration-validator")
+const {customerRegistrationValidator} = require("../middleware/validator/customer-registration-validator.js")
 const path = require('path');
 const multer = require("multer");
+const transaction = require('../models/transaction.js')
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // const { uploadMultipleFiles,uploadSingleFile } = require("../utils/fileUploader")
 const existingPath=path.resolve("./uploads/hotel")
@@ -105,6 +108,7 @@ router.get(
 // Customer profile
 router.post(
     "/customer/signup",
+    customerRegistrationValidator,
     controller.newCustomer
 )
 router.post(

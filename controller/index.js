@@ -298,8 +298,8 @@ class controller {
             password,
             email,
             phone,
-            customerlat,
-            customerlng,
+            locationCoordinatesLat,
+            locationCoordinatesLng,
         } = req.body
 
         // const hotelImages = req.files?.hotelImages?.length > 0
@@ -335,11 +335,11 @@ class controller {
                 customerDetails: {
                     savedAddresses: [
                         {
-                            coordinates: {
-                                lat: customerlat,
-                                lng: customerlng,
-                            },
-
+                            type: "Point",
+                            coordinates: [
+                                parseFloat(locationCoordinatesLng),
+                                parseFloat(locationCoordinatesLat),
+                            ],
                         },
                     ],
                 }
