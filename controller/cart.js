@@ -1,8 +1,67 @@
 const Cart = require("../models/cart-model")
 const Food = require("../models/food-model")
 const { makeJsonResponse } = require("../utils/response")
+const {
+  storeToCart,
+  updateCart,
+  deleteCartItem
+} = require("./services/customer/order-services")
 class CartClass {
+
   static async addToCart(req, res, next) {
+    try {
+      const {
+              foodId,
+              itemCount
+            } = req.body;
+      const user = req.user;
+      
+      const addToCart = await storeToCart(foodId, itemCount, user);
+    
+      return res.status(200).json(makeJsonResponse('Success', { message: "item added to cart", data: addToCart }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async updateCart(req, res, next) {
+    try {
+      const {
+              cartId,
+              foodId,
+              itemCount
+            } = req.body;
+      const user = req.user;
+      
+      const updateCartData = await updateCart(cartId, foodId, itemCount, user);
+    
+      return res.status(200).json(makeJsonResponse('Success', { message: "item updated in cart", data: updateCartData }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:123 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async deleteCart(req, res, next) {
+    try {
+      const {
+            cartId
+            } = req.params;
+      const user = req.user;
+      
+      const deleteCartItemData = await deleteCartItem(cartId,user);
+    
+      return res.status(200).json(makeJsonResponse('Success', { message: "item deleted from cart", data: deleteCartItemData }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:123 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+  static async addToCart2(req, res, next) {
     try {
       const userId = req.user
       const foodToAddToCart = req.params.id.toString()
@@ -44,8 +103,8 @@ class CartClass {
 
   static async allCartItem(req, res, next) {
     try {
-      const userId = req.user
-      const findUsersCart = await Cart.find({userId: userId._id})
+      const user = req.user
+      const findUsersCart = await Cart.find({userId: user._id})
       // return res.status(200).json(findUsersCart)
       return res.status(200).json(makeJsonResponse('Success', { message: "All cart",findUsersCart},{}, 200, true));
     } catch (error) {

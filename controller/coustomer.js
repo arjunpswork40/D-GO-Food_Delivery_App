@@ -280,9 +280,7 @@ class customerController {
     }
   }
 
-
-
-
+  
 }
 
 module.exports = customerController
