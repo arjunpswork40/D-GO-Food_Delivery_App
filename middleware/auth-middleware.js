@@ -102,7 +102,7 @@ class authorisation {
             },
             TOKEN_KEY,
             {
-                expiresIn: 3600
+                expiresIn: 86400
             }
         )
     }

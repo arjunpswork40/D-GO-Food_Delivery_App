@@ -409,7 +409,7 @@ module.exports = {
                 phone: user.phone,
                 email: user.email,
                 bankDetails: user.bankDetails,
-                address: user.address
+                address: user.customerDetails.savedAddresses
             }
 
             let totalOrders = user.customerDetails.orders;
