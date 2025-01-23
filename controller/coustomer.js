@@ -302,7 +302,12 @@ class customerController {
       return res.status(200).json(
         makeJsonResponse(
           'Success',
-          { message: "Bank details updated successfully", user: userProfile },
+          { message: "Bank details updated successfully", user: {
+            bankDetails: userProfile.bankDetails,
+            name: userProfile.name,
+            userId: userProfile._id,
+            email: userProfile.email
+          } },
           {},
           200,
           true
