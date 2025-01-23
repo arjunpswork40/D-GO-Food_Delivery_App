@@ -4,12 +4,15 @@ const foodMainCategory = require("../../../models/food-main-category");
 const offer = require("../../../models/offer");
 const serviceCategoryModel = require("../../../models/serviceCategory-model");
 const userModel = require("../../../models/user-model");
-const OWNER = require("../../../utils/userRoles")
+const {OWNER} = require("../../../utils/userRoles")
 module.exports = {
     getNearByHotelsWithPaginationAndCurrentLocation: async (userLocation, maxDistance, page, limit) => {
         try {
             
-            const skip = (page - 1) * limit;
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit)
+            }
 
             const nearbyHotels = await userModel.aggregate([
                 {
@@ -55,10 +58,16 @@ module.exports = {
                     },
                 },
                 {
+                    $skip: options.skip, // Pagination: Skip the first 'n' documents
+                },
+                {
+                    $limit: options.limit, // Pagination: Limit the number of documents
+                },
+                {
                     // Slice the hotelDetails array to get the first `limit` items based on pagination
                     $project: {
                         name: 1,
-                        hotelDetails: { $slice: ["$hotelDetails", skip, limit] },  // Skip and limit for pagination
+                        hotelDetails: { $slice: ["$hotelDetails", options.skip, options.limit] },  // Skip and limit for pagination
                     },
                 },
             ]);
@@ -320,6 +329,410 @@ module.exports = {
             return false;
         }
     },
+
+    getOfferDetails: async (page, limit) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            let offersData = await offer.find()
+                                        .skip(options.skip)
+                                        .limit(options.limit)
+                                        .select("deductionAmount name ownerId mainOffer tag_line")
+                                        .populate("ownerId", "name hotelDetails.name hotelDetails.description hotelDetails.images.hotelMainImage");
+
+            return offersData;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    getHighlightedHotels: async (page, limit) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            let result = await userModel.aggregate([
+                {
+                    $match: {
+                        "hotelDetails" : {
+                            $exists: true
+                        }
+                    } // Ensure documents have hotelDetails.
+                },
+                {
+                    $sort: {
+                        "hotelDetails.partnerBrand": -1, // True (1) comes first, False (0) later
+                        "hotelDetails.priorityIndex": 1 // Ascending order of priorityIndex
+                    }
+                },
+                {
+                    $skip: options.skip // Skip documents for pagination
+                },
+                {
+                    $limit: options.limit // Limit the number of documents per page
+                },
+                { 
+                    $project: { 
+                        "hotelDetails.name": 1,
+                        "hotelDetails.images.hotelMainImage": 1,
+                        "hotelDetails.description": 1,
+                        name: 1 ,
+                    }
+                }
+            ]);
+
+            return result;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    getAccountDetails: async(user, page, limit) => {
+        try {
+            let finalResult = {
+                name: user.name,
+                phone: user.phone,
+                email: user.email,
+                bankDetails: user.bankDetails,
+                address: user.address
+            }
+
+            let totalOrders = user.customerDetails.orders;
+
+            const startIndex = (page - 1) * limit; // Calculate the starting index
+            const endIndex = startIndex + limit;       // Calculate the ending index
+            const paginatedOrders =  totalOrders.slice(startIndex, endIndex);  // Slice the array
+            finalResult.orders = paginatedOrders;
+
+            return finalResult;
+            
+        } catch(error) {
+            console.error("Error getAccountDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    getHotelByFilter: async (page, limit, userCoordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            // Aggregation pipeline
+            const pipeline = [];
+
+            // GeoNear stage for calculating distance
+            if (offersNearYou === "true" || fastDelivery === "true") {
+                const maxDistance = fastDelivery ? 2000 : 10000; // 2 km for fastDelivery, 10 km for offersNearYou
+                const minDistance = offersNearYou ? 5000 : 0; // 5 km for offersNearYou, 0 for fastDelivery
+
+                pipeline.push({
+                    $geoNear: {
+                        near: {
+                            type: "Point",
+                            coordinates: userCoordinates, // [longitude, latitude]
+                        },
+                        distanceField: "distance", // Field to store calculated distance
+                        spherical: true, // Perform spherical calculation
+                        maxDistance: maxDistance,
+                        minDistance: minDistance,
+                        key: "hotelDetails.location.coordinates"
+                    },
+                });
+            } else {
+                // Match stage for other filters
+                pipeline.push({ $match: query });
+            }
+
+            // Add sorting
+            const sort = {
+                "hotelDetails.priorityIndex": -1, // Default sorting by priority index
+            };
+            if (sortByRating === "true") {
+                console.log('p')
+                sort["ratings.averageRating"] = -1; // Sort by average rating
+            }
+            if (sortOrder === "true") {
+                sort["hotelDetails.name"] = sortOrder === "a-z" ? 1 : -1; // Sort by name
+            }
+            if (bestSellers === "true") {
+                sort["order.length"] = -1; // Sort by order count
+            }
+
+            // Sorting stage
+            pipeline.push({ $sort: sort });
+
+            // Add pagination
+            pipeline.push({ $skip: options.skip });
+            pipeline.push({ $limit: options.limit });
+
+            // Projection stage
+            pipeline.push({
+                $project: {
+                    "hotelDetails.name": 1,
+                    "hotelDetails.description": 1,
+                    "hotelDetails.images.hotelMainImage": 1,
+                    ratings: 1,
+                    name: 1,
+                    orderCount: { $size: "$order" }, // Include order count
+                    distance: 1, // Include calculated distance
+                },
+            });
+
+            // Execute the aggregation pipeline
+            const result = await userModel.aggregate(pipeline);
+
+            return result;
+        } catch(error) {
+            console.error("Error getOfferDetails (from service file):", error);
+            return false;
+        }
+    },
+
+    searchHotelsByKeyword: async (keyword, page, limit, customerLocation) => {
+        try {
+            const query = {
+                role: OWNER,
+            };
+    
+            const options = {
+                skip: (page - 1) * limit,
+                limit: Number(limit),
+            };
+
+            const regex = new RegExp(keyword, "i");
+    
+            const results = await userModel.aggregate([
+                // Apply geoNear stage to filter hotels by proximity to customer location
+                {
+                    $geoNear: {
+                        near: customerLocation.coordinates, // The user's current location
+                        distanceField: "distance", // Field to store the calculated distance
+                        spherical: true, // Use spherical geometry
+                        key: "hotelDetails.location"
+                    },
+                },
+                // Lookup food items from the Food collection
+                {
+                    $lookup: {
+                        from: "foods", // The name of the Food collection
+                        localField: "_id", // The User model's primary key
+                        foreignField: "hotelId", // The field in Food that links to User
+                        as: "foodItems", // Output array name for the joined food items
+                    },
+                },
+                {
+                    $unwind: "$foodItems", // Unwind the foodItems array from $lookup
+                },
+                {
+                    $unwind: "$foodItems.foodItems", // Unwind the embedded foodItems array within each food document
+                },
+                // Apply facets for hotels and food items separately
+                {
+                    $facet: {
+                        // Match for hotel names
+                        hotels: [
+                            {
+                                $match: {
+                                    "hotelDetails.name": { $regex: regex },
+                                    role: OWNER,
+                                },
+                            },
+                            {
+                                $project: {
+                                    _id: "$_id",
+                                    hotelName: "$hotelDetails.name",
+                                    hotelDescription: "$hotelDetails.description",
+                                    location: "$hotelDetails.location",
+                                    distance: 1, // Include the calculated distance
+                                },
+                            },
+                            { $skip: options.skip }, // Skip documents for pagination
+                            { $limit: options.limit }, // Limit the number of documents
+                        ],
+                        // Match for food item names
+                        foodItems: [
+                            {
+                                $match: {
+                                    "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
+                                },
+                            },
+                            {
+                                $project: {
+                                    _id: "$_id",
+                                    hotelName: "$hotelDetails.name",
+                                    foodItemName: "$foodItems.foodItems.name",
+                                    foodDescription: "$foodItems.foodItems.description",
+                                    price: "$foodItems.foodItems.price",
+                                },
+                            },
+                            { $skip: options.skip }, // Skip documents for pagination
+                            { $limit: options.limit }, // Limit the number of documents
+                        ],
+                    },
+                },
+            ]);
+    
+            return results;
+        } catch (error) {
+            console.error("Error searchHotelsByKeyword (from service file):", error);
+            return false;
+        }
+    },
+    
+    
+
+    // searchHotelsByKeyword: async (keyword, page, limit, currentLocation) => {
+    //     try {
+    //         const query = {
+    //             role: "owner", // Search only for users with the 'OWNER' role
+    //         };
+    
+    //         const options = {
+    //             skip: (page - 1) * limit,
+    //             limit: Number(limit),
+    //         };
+    
+    //         const regex = new RegExp(keyword, "i");
+    
+    //         // MongoDB expects the location as a { type: "Point", coordinates: [longitude, latitude] } format
+    //         const location = { 
+    //             type: "Point", 
+    //             coordinates: currentLocation.coordinates
+    //         };
+    
+    //         const results = await userModel.aggregate([
+    //             {
+    //                 // First, we add the geoNear stage to calculate distance for hotels
+    //                 $geoNear: {
+    //                     near: location, // The user's current location
+    //                     distanceField: "distance", // The field to store the calculated distance
+    //                     spherical: true, // Use spherical geometry for accurate distance calculations
+    //                     query: { 
+    //                         "role": "owner", // Ensure we only search for owners
+    //                         "hotelDetails.name": { $regex: regex }, // Filter hotels by keyword search
+    //                         "hotelDetails.location.coordinates" :  { $exists: true }
+    //                     },
+    //                 },
+    //             },
+    //             {
+    //                 $lookup: {
+    //                     from: "foods", // The name of the Food collection
+    //                     localField: "_id", // The User model's primary key
+    //                     foreignField: "hotelId", // The field in Food that links to User
+    //                     as: "foodItems", // Output array name for the joined food items
+    //                 },
+    //             },
+    //             {
+    //                 $unwind: "$foodItems", // Unwind the foodItems array from $lookup
+    //             },
+    //             {
+    //                 $unwind: "$foodItems.foodItems", // Unwind the embedded foodItems array within each food document
+    //             },
+    //             {
+    //                 $facet: {
+    //                     hotels: [
+    //                         {
+    //                             $project: {
+    //                                 _id: "$_id",
+    //                                 hotelName: "$hotelDetails.name",
+    //                                 hotelDescription: "$hotelDetails.description",
+    //                                 location: "$hotelDetails.location",
+    //                                 distance: 1, // Include distance in the result
+    //                             },
+    //                         },
+    //                         { $skip: options.skip }, // Skip documents for pagination
+    //                         { $limit: options.limit }, // Limit the number of documents
+    //                         {
+    //                             $group: {
+    //                                 _id: "$_id", // Group by hotel ID
+    //                                 hotelName: { $first: "$hotelName" },
+    //                                 hotelDescription: { $first: "$hotelDescription" },
+    //                                 location: { $first: "$location" },
+    //                                 distance: { $first: "$distance" }, // Include the distance in the result
+    //                             },
+    //                         },
+    //                     ],
+    //                     foodItems: [
+    //                         {
+    //                             $match: {
+    //                                 "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
+    //                                 role: "owner", // Ensure we only search for owners
+    //                             },
+    //                         },
+    //                         {
+    //                             $lookup: {
+    //                                 from: "users", // Lookup the hotel owner information
+    //                                 localField: "hotelId", // The Food's hotelId field
+    //                                 foreignField: "_id", // The User model's primary key
+    //                                 as: "hotelOwner", // Name for the output array
+    //                             },
+    //                         },
+    //                         // Unwind the hotel owner information to filter by location and role
+    //                         {
+    //                             $unwind: "$hotelOwner",
+    //                         },
+    //                         {
+    //                             $match: {
+    //                                 "hotelOwner.role": "owner", // Filter by OWNER role of hotel owner
+    //                                 "hotelOwner.hotelDetails.location.coordinates": {
+    //                                     $geoWithin: { $centerSphere: [location.coordinates, 5 / 3963] }, // Check if the food item is within a 5-mile radius
+    //                                 },
+    //                             },
+    //                         },
+    //                         {
+    //                             $project: {
+    //                                 _id: "$_id",
+    //                                 hotelName: "$foodItems.hotelDetails.name",
+    //                                 foodItemName: "$foodItems.foodItems.name",
+    //                                 foodDescription: "$foodItems.foodItems.description",
+    //                                 price: "$foodItems.foodItems.price",
+    //                             },
+    //                         },
+    //                         { $skip: options.skip }, // Skip documents for pagination
+    //                         { $limit: options.limit }, // Limit the number of documents
+    //                         {
+    //                             $group: {
+    //                                 _id: "$_id", // Group by hotel ID to avoid duplicate hotels
+    //                                 hotelName: { $first: "$hotelName" },
+    //                                 foodItemName: { $first: "$foodItemName" },
+    //                                 foodDescription: { $first: "$foodDescription" },
+    //                                 price: { $first: "$price" },
+    //                             },
+    //                         },
+    //                     ],
+    //                 },
+    //             },
+    //         ]);
+    
+    //         return results;
+    //     } catch (error) {
+    //         console.error("Error searchHotelsByKeyword (from service file):", error);
+    //         return false;
+    //     }
+    // },
+    
+    
     getPopularHotels: async (page, limit) => {
         
         const query = {

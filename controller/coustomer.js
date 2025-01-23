@@ -13,7 +13,12 @@ const {
   getAllNearByHotels,
   getPopularHotels,
   getOffersWithHotelDetails,
-  getPopularBrands
+  getPopularBrands,
+  searchHotelsByKeyword,
+  getOfferDetails,
+  getHighlightedHotels,
+  getHotelByFilter,
+  getAccountDetails
 } = require("./services/customer/hotel-related-services");
 const {
   getAdminBannersAndServicesByPagination,
@@ -32,7 +37,91 @@ class customerController {
     }
   }
 
+  static async search(req, res, next) {
+    try {
+      const {
+            page,
+            limit,
+            } = req.params;
+      const { keyword } = req.query;      
+      const user = req.user;
+      const result = await searchHotelsByKeyword(keyword, page, limit, user.customerDetails.currentLocation);
+
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async restaurantOffers(req, res, next) {
+    try {
+      const {
+            page,
+            limit,
+            } = req.params;
+
+      const result = await getOfferDetails(page, limit);
+
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
   
+  static async restaurantList(req, res, next) {
+    try {
+      const {
+              page,
+              limit,
+            } = req.params;
+
+      const {
+              offersNearYou,
+              bestSellers,
+              sortByRating,
+              fastDelivery,
+              sortOrder
+            } = req.query;
+
+      const user = req.user;
+
+      const highlightedHotels = await getHighlightedHotels(page, limit);
+      const restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+
+      const finalResult = {
+        restaurantList: restaurantList,
+        highlightedHotels: highlightedHotels,
+      }
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: finalResult }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async accountDetails(req, res, next) {
+    try {
+      const {
+              page,
+              limit,
+            } = req.params;
+      const user = req.user;
+      const accountDetails = await getAccountDetails(user, page, limit);
+    
+      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: accountDetails }, {}, 200, true));
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+
   static async customerprofile(req, res, next) {
     try {
       const customerId = req.params.id;
@@ -191,9 +280,7 @@ class customerController {
     }
   }
 
-
-
-
+  
 }
 
 module.exports = customerController
