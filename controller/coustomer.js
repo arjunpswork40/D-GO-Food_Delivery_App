@@ -204,7 +204,6 @@ class customerController {
   static async CustomeraddressAdd(req, res, next) {
     const { body } = req;
     const { user } = req;
-    console.log(user._id)
     try {
 
       const address = {
@@ -277,15 +276,7 @@ class customerController {
       bankName,
       ifscCode,
     } = body;
-
-    console.log(body);
     try {
-      // Validate input fields
-      if (!accountName || !accountNumber || !bankName || !ifscCode) {
-        return res.status(400).json(
-          makeJsonResponse('Validation Error', {}, { message: "All fields are required" }, 400, false)
-        );
-      }
 
       // Fetch the user profile using the authenticated user's ID
       const userProfile = await User.findById(user.id);

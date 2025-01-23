@@ -1,6 +1,30 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const addressSchema = new Schema(
+  {
+    label: { type: String }, // e.g., "Home", "Work"
+    // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+    // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+    type: {
+      type: String,
+      enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+      required: false,  // This makes it optional
+    },
+    coordinates: {
+      type: [Number],  // [longitude, latitude]
+      required: false,
+    },
+    street: { type: String },
+    city: { type: String },
+    state: { type: String },
+    country: { type: String },
+    zipCode: { type: String },
+  },
+  {
+      timestamps: true
+  }
+)
 const userSchema = new Schema(
     {  
         hotelDetails: {
@@ -80,15 +104,6 @@ const userSchema = new Schema(
                 message: problem => `${problem.value} is not valid`
                 }
         },
-
-        address: {
-            street: { type: String },
-            city: { type: String },
-            state: { type: String },
-            country: { type: String },
-            pincode: { type: String },
-          },
-
         phone: {
             type: Number,
             validate: {
@@ -143,27 +158,7 @@ const userSchema = new Schema(
           },
         customerDetails: {
             favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // References to Owner Users
-            savedAddresses: [
-              {
-                label: { type: String }, // e.g., "Home", "Work"
-                // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-                // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
-                type: {
-                  type: String,
-                  enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
-                  required: false,  // This makes it optional
-                },
-                coordinates: {
-                  type: [Number],  // [longitude, latitude]
-                  required: false,
-                },
-                address: { type: String },
-                city: { type: String },
-                state: { type: String },
-                country: { type: String },
-                pincode: { type: String },
-              },
-            ],
+            savedAddresses: [addressSchema],
             orders: [
               {
                 orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
