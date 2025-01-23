@@ -203,7 +203,7 @@ class controller {
                 const serviceCategoryExp =new serviceCategoryModel({
                     title: faker.company.catchPhrase(),
                     description: faker.lorem.sentence(),
-                    main_image: 'hotel/lll.jpg',
+                    main_image: 'hotel/h1.jpg',
                 })
                 serviceCategoryDummy.push(serviceCategoryExp)
                 console.log('loop = '+i)
@@ -222,6 +222,7 @@ class controller {
                         name: faker.commerce.productName(),
                         ownerId: owner._id,
                         mainOffer: Math.random() > 0.5,
+                        tag_line:faker.lorem.sentence()
                     });
                     offers.push(offer);
                 }
