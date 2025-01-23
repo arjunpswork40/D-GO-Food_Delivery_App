@@ -12,7 +12,7 @@ app.use(bodyParser.json())
 // app.use(fileUpload())
 
 app.use("/", require("./routes/index"))
-app.use('/uploads/hotels', express.static(path.join(__dirname, 'uploads/hotels')));
+app.use('/uploads/hotel', express.static(path.join(__dirname, 'uploads/hotel')));
 
 // error handler
 app.use((req, res, next) => {
