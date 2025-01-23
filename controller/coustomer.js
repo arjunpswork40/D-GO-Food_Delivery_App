@@ -23,7 +23,8 @@ const {
 const {
   getAdminBannersAndServicesByPagination,
   getMainCategory
-} = require("./services/admin/admin-related-services")
+} = require("./services/admin/admin-related-services");
+const userModel = require("../models/user-model");
 class customerController {
 
   static async allFoods(req, res, next) {
@@ -192,7 +193,7 @@ class customerController {
         topOffers: topOffers
       }
       
-      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 200, false));
+      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 200, true));
       
     } catch (error) {
       console.error(`Error foods:3 ${error.code} - ${error.message}`);
@@ -202,76 +203,58 @@ class customerController {
 
   static async CustomeraddressAdd(req, res, next) {
     const { body } = req;
-    const customerId = req.params.id;
-
-    // Extracting fields from the request body
-    const {
-        customerlabel,
-        customerlat,
-        customerlng,
-        customeraddress,
-        customercity,
-        customerstate,
-        customercountry,
-        customerpincode
-    } = body;
-
+    const { user } = req;
+    console.log(user._id)
     try {
-        // Validate required fields for the address
-        if (
-            !customerlabel ||
-            !customerlat ||
-            !customerlng ||
-            !customeraddress ||
-            !customercity ||
-            !customerstate ||
-            !customercountry ||
-            !customerpincode
-        ) {
-            return res.status(400).json(
-                makeJsonResponse('Bad Request', {}, { message: "Please fill all required fields" }, 400, false)
-            );
-        }
 
-        // Fetch the customer profile using the customer ID
-        const customerProfile = await User.findById(customerId);
+      const address = {
+        _id: body._id, // Use the _id if updating an existing address
+        label: body.label,
+        type: 'Point',
+        coordinates: [body.lng, body.lat], // Example: Bangalore coordinates
+        street: body.street,
+        city: body.city,
+        state: body.state,
+        country: body.country,
+        zipCode: body.zipCode,
+      }
+      const userData = await userModel.findById(user._id);
 
-        if (!customerProfile) {
-            return res.status(404).json(
-                makeJsonResponse('Not Found', {}, { message: "Customer not found" }, 404, false)
-            );
-        }
+      if(!userData) {
+        return res.status(400).json(makeJsonResponse('Failed', {}, { message: "User not found", data:body }, 400, false));
+      }
 
-        // Create a new address object
-        const newAddress = {
-            label: customerlabel, // e.g., "Home", "Work"
-            coordinates: {
-                lat: parseFloat(customerlat),
-                lng: parseFloat(customerlng),
-            },
-            address: customeraddress,
-            city: customercity,
-            state: customerstate,
-            country: customercountry,
-            pincode: customerpincode,
-        };
+      if(body._id) {
+          // If _id exists, find the address by _id and update it
+          const existingAddress = userData.customerDetails.savedAddresses.id(address._id);
 
-        // Append the new address to the savedAddresses array
-        customerProfile.savedAddresses = [...(customerProfile.savedAddresses || []), newAddress];
+          if (existingAddress) {
+            // Update the fields of the existing address
+            Object.assign(existingAddress, address);
+          } else {
+            return res.status(400).json(makeJsonResponse('Failed', {}, { message: "Address with the provided _id not found", data:body }, 400, false));
+          }
+      } else {
+        userData.customerDetails.savedAddresses.push(address);
+      }
+       
+      const updatedUser = await userData.save();
 
-        // Save the updated customer profile
-        await customerProfile.save();
-
-        // Return success response
-        return res.status(200).json(
-            makeJsonResponse(
-                'Success',
-                { message: "Address added successfully", user: customerProfile },
-                {},
-                200,
-                true
-            )
-        );
+      // Return success response
+      return res.status(200).json(
+          makeJsonResponse(
+              'Success',
+              { message: "Address added successfully", data: {
+                savedAddresses: updatedUser.customerDetails.savedAddresses,
+                userId: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email
+              } },
+              {},
+              200,
+              true
+          )
+      );
     } catch (error) {
         console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
         return res.status(500).json(
@@ -280,7 +263,6 @@ class customerController {
     }
   }
 
-  
 }
 
 module.exports = customerController
