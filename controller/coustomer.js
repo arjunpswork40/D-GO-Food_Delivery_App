@@ -3,12 +3,12 @@ const Food = require("../models/food-model");
 const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
 const { makeJsonResponse } = require("../utils/response");
-const { 
+const {
   getNearByHotelsWithPaginationAndCurrentLocation,
   getSpotlights,
-  getMainFoodCategoryListByCount, 
-  getServiceCategoryDetails, 
-  getApplicationBasicDetails, 
+  getMainFoodCategoryListByCount,
+  getServiceCategoryDetails,
+  getApplicationBasicDetails,
   getAddsByCount,
   getAllNearByHotels,
   getPopularHotels,
@@ -40,10 +40,10 @@ class customerController {
   static async search(req, res, next) {
     try {
       const {
-            page,
-            limit,
-            } = req.params;
-      const { keyword } = req.query;      
+        page,
+        limit,
+      } = req.params;
+      const { keyword } = req.query;
       const user = req.user;
       const result = await searchHotelsByKeyword(keyword, page, limit, user.customerDetails.currentLocation);
 
@@ -58,9 +58,9 @@ class customerController {
   static async restaurantOffers(req, res, next) {
     try {
       const {
-            page,
-            limit,
-            } = req.params;
+        page,
+        limit,
+      } = req.params;
 
       const result = await getOfferDetails(page, limit);
 
@@ -71,21 +71,21 @@ class customerController {
       return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
-  
+
   static async restaurantList(req, res, next) {
     try {
       const {
-              page,
-              limit,
-            } = req.params;
+        page,
+        limit,
+      } = req.params;
 
       const {
-              offersNearYou,
-              bestSellers,
-              sortByRating,
-              fastDelivery,
-              sortOrder
-            } = req.query;
+        offersNearYou,
+        bestSellers,
+        sortByRating,
+        fastDelivery,
+        sortOrder
+      } = req.query;
 
       const user = req.user;
 
@@ -107,12 +107,12 @@ class customerController {
   static async accountDetails(req, res, next) {
     try {
       const {
-              page,
-              limit,
-            } = req.params;
+        page,
+        limit,
+      } = req.params;
       const user = req.user;
       const accountDetails = await getAccountDetails(user, page, limit);
-    
+
       return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: accountDetails }, {}, 200, true));
     } catch (error) {
       console.log(error)
@@ -143,12 +143,12 @@ class customerController {
       const user = req.user;
       const applicationDetails = await getApplicationBasicDetails();
       const serviceCategoryDetails = await getServiceCategoryDetails();
-      const maxDistance  = process.env.NEAR_BY_MAX_DISTANCE || "5000";
+      const maxDistance = process.env.NEAR_BY_MAX_DISTANCE || "5000";
       let topPicks = [];
       let allRestaurantsNearBy = [];
       let popularBrands = [];
       try {
-        if(user.customerDetails.currentLocation.coordinates){
+        if (user.customerDetails.currentLocation.coordinates) {
           // fetching hotel by priority index, location and rating
           topPicks = await getNearByHotelsWithPaginationAndCurrentLocation(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit)
 
@@ -163,19 +163,19 @@ class customerController {
       }
 
       const adds = await getAddsByCount(Number(process.env.HOMEPAGE_ADDS_COUNT || 10));
-      
+
       const mainFoodCategories = await getMainFoodCategoryListByCount(Number(process.env.HOMEPAGE_MAIN_CATEGORY_LIST_COUNT || 10));
-      
+
       const spotlight = await getSpotlights(page, limit)
 
       const adminBannersAndSerivces = await getAdminBannersAndServicesByPagination(page, limit);
 
-      const mainCategories = await getMainCategory(page,limit);
+      const mainCategories = await getMainCategory(page, limit);
 
       const popularRestaurants = await getPopularHotels(page, limit);
 
-      const topOffers = await getOffersWithHotelDetails(page,limit);
-      
+      const topOffers = await getOffersWithHotelDetails(page, limit);
+
       const finalResult = {
         topData: applicationDetails,
         serviceCategoryDetails: serviceCategoryDetails,
@@ -183,17 +183,17 @@ class customerController {
         adds: adds,
         mainFoodCategories: mainFoodCategories,
         spotlight: spotlight,
-        adminBanners: adminBannersAndSerivces ?  adminBannersAndSerivces.banners : [],
-        adminServices: adminBannersAndSerivces ? adminBannersAndSerivces.services: [],
+        adminBanners: adminBannersAndSerivces ? adminBannersAndSerivces.banners : [],
+        adminServices: adminBannersAndSerivces ? adminBannersAndSerivces.services : [],
         popularCategories: mainCategories,
         allRestaurantsNearBy: allRestaurantsNearBy,
         popularBrands: popularBrands,
         popularRestaurants: popularRestaurants,
         topOffers: topOffers
       }
-      
-      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 200, false));
-      
+
+      return res.status(200).json(makeJsonResponse('Success', { message: "Home details", data: finalResult }, {}, 200, false));
+
     } catch (error) {
       console.error(`Error foods:3 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error3', {}, { message: error.message || "Internal error occurred" }, 500, false));
@@ -206,81 +206,143 @@ class customerController {
 
     // Extracting fields from the request body
     const {
-        customerlabel,
-        customerlat,
-        customerlng,
-        customeraddress,
-        customercity,
-        customerstate,
-        customercountry,
-        customerpincode
+      customerlabel,
+      customerlat,
+      customerlng,
+      customeraddress,
+      customercity,
+      customerstate,
+      customercountry,
+      customerpincode
     } = body;
 
     try {
-        // Validate required fields for the address
-        if (
-            !customerlabel ||
-            !customerlat ||
-            !customerlng ||
-            !customeraddress ||
-            !customercity ||
-            !customerstate ||
-            !customercountry ||
-            !customerpincode
-        ) {
-            return res.status(400).json(
-                makeJsonResponse('Bad Request', {}, { message: "Please fill all required fields" }, 400, false)
-            );
-        }
-
-        // Fetch the customer profile using the customer ID
-        const customerProfile = await User.findById(customerId);
-
-        if (!customerProfile) {
-            return res.status(404).json(
-                makeJsonResponse('Not Found', {}, { message: "Customer not found" }, 404, false)
-            );
-        }
-
-        // Create a new address object
-        const newAddress = {
-            label: customerlabel, // e.g., "Home", "Work"
-            coordinates: {
-                lat: parseFloat(customerlat),
-                lng: parseFloat(customerlng),
-            },
-            address: customeraddress,
-            city: customercity,
-            state: customerstate,
-            country: customercountry,
-            pincode: customerpincode,
-        };
-
-        // Append the new address to the savedAddresses array
-        customerProfile.savedAddresses = [...(customerProfile.savedAddresses || []), newAddress];
-
-        // Save the updated customer profile
-        await customerProfile.save();
-
-        // Return success response
-        return res.status(200).json(
-            makeJsonResponse(
-                'Success',
-                { message: "Address added successfully", user: customerProfile },
-                {},
-                200,
-                true
-            )
+      // Validate required fields for the address
+      if (
+        !customerlabel ||
+        !customerlat ||
+        !customerlng ||
+        !customeraddress ||
+        !customercity ||
+        !customerstate ||
+        !customercountry ||
+        !customerpincode
+      ) {
+        return res.status(400).json(
+          makeJsonResponse('Bad Request', {}, { message: "Please fill all required fields" }, 400, false)
         );
+      }
+
+      // Fetch the customer profile using the customer ID
+      const customerProfile = await User.findById(customerId);
+
+      if (!customerProfile) {
+        return res.status(404).json(
+          makeJsonResponse('Not Found', {}, { message: "Customer not found" }, 404, false)
+        );
+      }
+
+      // Create a new address object
+      const newAddress = {
+        label: customerlabel, // e.g., "Home", "Work"
+        coordinates: {
+          lat: parseFloat(customerlat),
+          lng: parseFloat(customerlng),
+        },
+        address: customeraddress,
+        city: customercity,
+        state: customerstate,
+        country: customercountry,
+        pincode: customerpincode,
+      };
+
+      // Append the new address to the savedAddresses array
+      customerProfile.savedAddresses = [...(customerProfile.savedAddresses || []), newAddress];
+
+      // Save the updated customer profile
+      await customerProfile.save();
+
+      // Return success response
+      return res.status(200).json(
+        makeJsonResponse(
+          'Success',
+          { message: "Address added successfully", user: customerProfile },
+          {},
+          200,
+          true
+        )
+      );
     } catch (error) {
-        console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
-        return res.status(500).json(
-            makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false)
-        );
+      console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false)
+      );
     }
   }
 
-  
+
+
+
+  static async updateBankDetails(req, res, next) {
+    const { body } = req;
+    const user = req.user; // Assuming the authenticated user details are in req.user
+
+    // Extracting fields from the request body
+    const {
+      accountName,
+      accountNumber,
+      bankName,
+      ifscCode,
+    } = body;
+
+    console.log(body);
+    try {
+      // Validate input fields
+      if (!accountName || !accountNumber || !bankName || !ifscCode) {
+        return res.status(400).json(
+          makeJsonResponse('Validation Error', {}, { message: "All fields are required" }, 400, false)
+        );
+      }
+
+      // Fetch the user profile using the authenticated user's ID
+      const userProfile = await User.findById(user.id);
+
+      if (!userProfile) {
+        return res.status(404).json(
+          makeJsonResponse('Not Found', {}, { message: "User not found" }, 404, false)
+        );
+      }
+
+      // Update the bank details
+      userProfile.bankDetails = {
+        accountName,
+        accountNumber,
+        bankName,
+        ifscCode,
+      };
+
+      // Save the updated user profile
+      await userProfile.save();
+
+      // Return success response
+      return res.status(200).json(
+        makeJsonResponse(
+          'Success',
+          { message: "Bank details updated successfully", user: userProfile },
+          {},
+          200,
+          true
+        )
+      );
+    } catch (error) {
+      console.error(`Error updating bank details: ${error.code || ''} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false)
+      );
+    }
+  }
+
+
 }
 
 module.exports = customerController
