@@ -6,6 +6,7 @@ const bodyParser = require("body-parser")
 const multer = require("multer");
 const { PORT } = process.env
 const { makeJsonResponse } = require("./utils/response");
+const path = require('path');
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
