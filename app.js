@@ -12,6 +12,8 @@ app.use(bodyParser.json())
 // app.use(fileUpload())
 
 app.use("/", require("./routes/index"))
+app.use('/uploads/hotels', express.static(path.join(__dirname, 'uploads/hotels')));
+
 // error handler
 app.use((req, res, next) => {
     const response = makeJsonResponse('Not Found', {}, { message: "The requested resource was not found" }, 404, false);
