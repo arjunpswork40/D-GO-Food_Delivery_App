@@ -390,14 +390,13 @@ module.exports = {
                         "hotelDetails.name": 1,
                         "hotelDetails.images.hotelMainImage": 1,
                         "hotelDetails.description": 1,
-                        name: 1 ,
                     }
                 }
             ]);
 
             return result;
         } catch(error) {
-            console.error("Error getOfferDetails (from service file):", error);
+            console.error("Error getHighlightedHotels (from service file):", error);
             return false;
         }
     },
@@ -437,12 +436,12 @@ module.exports = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
             };
-
+            console.log(userCoordinates)
             // Aggregation pipeline
             const pipeline = [];
 
             // GeoNear stage for calculating distance
-            if (offersNearYou === "true" || fastDelivery === "true") {
+            if ((offersNearYou === "true" || fastDelivery === "true") && userCoordinates.length > 0) {
                 const maxDistance = fastDelivery ? 2000 : 10000; // 2 km for fastDelivery, 10 km for offersNearYou
                 const minDistance = offersNearYou ? 5000 : 0; // 5 km for offersNearYou, 0 for fastDelivery
 
@@ -493,7 +492,6 @@ module.exports = {
                     "hotelDetails.description": 1,
                     "hotelDetails.images.hotelMainImage": 1,
                     ratings: 1,
-                    name: 1,
                     orderCount: { $size: "$order" }, // Include order count
                     distance: 1, // Include calculated distance
                 },
@@ -504,7 +502,7 @@ module.exports = {
 
             return result;
         } catch(error) {
-            console.error("Error getOfferDetails (from service file):", error);
+            console.error("Error getHotelByFilter (from service file):", error);
             return false;
         }
     },

@@ -97,7 +97,7 @@ class customerController {
         restaurantList: restaurantList,
         highlightedHotels: highlightedHotels,
       }
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: finalResult }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Success', { ...finalResult }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
@@ -114,7 +114,7 @@ class customerController {
       const user = req.user;
       const accountDetails = await getAccountDetails(user, page, limit);
 
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: accountDetails }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Success', { accountDetails }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
