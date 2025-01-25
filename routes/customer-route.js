@@ -2,6 +2,8 @@ const express = require("express")
 const router = express.Router()
 const controller = require("../controller/coustomer")
 const auth = require("../middleware/auth-middleware")
+const {customerAdressUpdateValidator} = require("../middleware/validator/customer/customer-address-update-validator")
+const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer")
 
 // router.get(
 //     "/all",
@@ -46,10 +48,19 @@ router.get(
 )
 
 router.post(
-    "/:id",
+    "/address",
     auth.decodeToken,
+    customerAdressUpdateValidator,
     controller.CustomeraddressAdd
 )
+
+router.post(
+    "/bank-details",
+    auth.decodeToken,
+    BankdetailsValidationRules,
+    controller.updateBankDetails
+)
+
 
 
 module.exports = router

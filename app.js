@@ -6,12 +6,15 @@ const bodyParser = require("body-parser")
 const multer = require("multer");
 const { PORT } = process.env
 const { makeJsonResponse } = require("./utils/response");
+const path = require('path');
 
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(bodyParser.json())
 // app.use(fileUpload())
 
 app.use("/", require("./routes/index"))
+app.use('/uploads/hotel', express.static(path.join(__dirname, 'uploads/hotel')));
+
 // error handler
 app.use((req, res, next) => {
     const response = makeJsonResponse('Not Found', {}, { message: "The requested resource was not found" }, 404, false);
