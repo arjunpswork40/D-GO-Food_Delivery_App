@@ -20,6 +20,8 @@ const addressSchema = new Schema(
     state: { type: String },
     country: { type: String },
     zipCode: { type: String },
+    lat: { type: Number, required: false }, 
+    lng: { type: Number, required: false }, 
   },
   {
       timestamps: true
@@ -54,6 +56,8 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              lat: { type: Number, required: false }, 
+              lng: { type: Number, required: false }, 
             },
             contactNumber: { type: String, required: false },
             openingHours: {
@@ -147,6 +151,8 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              lat: { type: Number, required: false }, 
+              lng: { type: Number, required: false }, 
             },
             status: {
               type: String,
