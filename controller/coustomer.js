@@ -90,7 +90,7 @@ class customerController {
 
       const user = req.user;
 
-      let highlightedHotels = await getHighlightedHotels(page, limit);
+      let highlightedRestaurants = await getHighlightedHotels(page, limit);
       let restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
 
       restaurantList = restaurantList.map(item =>  ({
@@ -102,7 +102,7 @@ class customerController {
           orderCount: item.orderCount
       }))
 
-      highlightedHotels = highlightedHotels.map(item => ({
+      highlightedRestaurants = highlightedRestaurants.map(item => ({
           _id: item._id,
           image: item.hotelDetails.images.hotelMainImage[0],
           name: item.hotelDetails.name,
@@ -111,7 +111,7 @@ class customerController {
 
       const finalResult = {
         restaurantList: restaurantList,
-        highlightedHotels: highlightedHotels,
+        highlightedRestaurants: highlightedRestaurants,
       }
       return res.status(200).json(makeJsonResponse('Success', { ...finalResult }, {}, 200, true));
     } catch (error) {
