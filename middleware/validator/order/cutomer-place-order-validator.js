@@ -1,5 +1,5 @@
 const { body, validationResult } = require('express-validator');
-const {makeJsonResponse} = require("../../utils/response")
+const {makeJsonResponse} = require("../../../utils/response")
 const customerPlaceOrderValidator = [
 
     body('cartId')

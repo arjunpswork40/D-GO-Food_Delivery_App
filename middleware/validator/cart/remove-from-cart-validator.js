@@ -1,6 +1,6 @@
 const { body, validationResult } = require('express-validator');
 const {makeJsonResponse} = require("../../../utils/response")
-const addToCartValidator = [
+const removeFromCartValidator = [
     
    
     body("restaurantId")
@@ -26,4 +26,4 @@ const addToCartValidator = [
     }
 ];
 
-module.exports = { addToCartValidator };
+module.exports = { removeFromCartValidator };
