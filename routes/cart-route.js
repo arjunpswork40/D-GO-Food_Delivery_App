@@ -5,6 +5,7 @@ const auth = require("../middleware/auth-middleware")
 const {addToCartValidator} = require("../middleware/validator/cart/add-to-cart-validator")
 const {updateCartValidator} = require("../middleware/validator/cart/update-cart-validator")
 const {deleteCartItemValidator} = require("../middleware/validator/cart/delete-cart-item-validator")
+const {removeFromCartValidator} = require("../middleware/validator/cart/remove-from-cart-validator")
 
 // router.get(
 //     "/",
@@ -50,9 +51,16 @@ router.post(
 )
 
 router.delete(
-    "/remove-cart-item/:cartId",
+    "/delete-cart-item/:cartId",
     auth.decodeToken,
     deleteCartItemValidator,
     controller.deleteCart
+)
+
+router.post(
+    "/remove-cart-item",
+    auth.decodeToken,
+    removeFromCartValidator,
+    controller.removeOrDeleteCartEntry
 )
 module.exports = router

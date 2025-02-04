@@ -2,23 +2,48 @@ const Cart = require("../models/cart-model")
 const Food = require("../models/food-model")
 const { makeJsonResponse } = require("../utils/response")
 const {
-  storeToCart,
+  storeOrUpdateToCart,
   updateCart,
-  deleteCartItem
+  deleteCartItem,
+  removeOrDeleteFromCart
 } = require("./services/customer/order-services")
 class CartClass {
 
   static async addToCart(req, res, next) {
     try {
-      const {
+      let {
+              restaurantId,
               foodId,
-              itemCount
+              qty,
             } = req.body;
       const user = req.user;
-      
-      const addToCart = await storeToCart(foodId, itemCount, user);
-    
-      return res.status(200).json(makeJsonResponse('Success', { message: "item added to cart", data: addToCart }, {}, 200, true));
+      const addToCart = await storeOrUpdateToCart(restaurantId, foodId, qty, user);
+      let result = makeJsonResponse(addToCart.message ?? "item updated in cart", addToCart.cartData, {}, 200, true)
+      if(!addToCart.status) {
+        result = makeJsonResponse(addToCart.message ?? "Internal error occured", {},addToCart.cartData, 500, false)
+      }
+      return res.status(addToCart.status ? 200 : 500).json(result);
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async removeOrDeleteCartEntry(req, res, next) {
+    try {
+      let {
+              restaurantId,
+              foodId,
+              qty,
+            } = req.body;
+      const user = req.user;
+      const addToCart = await removeOrDeleteFromCart(restaurantId, foodId, qty, user);
+      let result = makeJsonResponse(addToCart.message ?? "item updated in cart", addToCart.cartData, {}, 200, true)
+      if(!addToCart.status) {
+        result = makeJsonResponse(addToCart.message ?? "Internal error occured", {},addToCart.cartData, 500, false)
+      }
+      return res.status(addToCart.status ? 200 : 500).json(result);
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
