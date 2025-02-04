@@ -104,9 +104,9 @@ class CartClass {
   static async allCartItem(req, res, next) {
     try {
       const user = req.user
-      const findUsersCart = await Cart.find({userId: user._id})
+      const cartItems = await Cart.find({userId: user._id})
       // return res.status(200).json(findUsersCart)
-      return res.status(200).json(makeJsonResponse('Success', { message: "All cart",findUsersCart},{}, 200, true));
+      return res.status(200).json(makeJsonResponse('All cart items', { cartItems},{}, 200, true));
     } catch (error) {
       console.error(`Error foods: ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));

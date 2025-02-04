@@ -390,14 +390,13 @@ module.exports = {
                         "hotelDetails.name": 1,
                         "hotelDetails.images.hotelMainImage": 1,
                         "hotelDetails.description": 1,
-                        name: 1 ,
                     }
                 }
             ]);
 
             return result;
         } catch(error) {
-            console.error("Error getOfferDetails (from service file):", error);
+            console.error("Error getHighlightedHotels (from service file):", error);
             return false;
         }
     },
@@ -437,12 +436,12 @@ module.exports = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
             };
-
+            console.log(userCoordinates)
             // Aggregation pipeline
             const pipeline = [];
 
             // GeoNear stage for calculating distance
-            if (offersNearYou === "true" || fastDelivery === "true") {
+            if ((offersNearYou === "true" || fastDelivery === "true") && userCoordinates.length > 0) {
                 const maxDistance = fastDelivery ? 2000 : 10000; // 2 km for fastDelivery, 10 km for offersNearYou
                 const minDistance = offersNearYou ? 5000 : 0; // 5 km for offersNearYou, 0 for fastDelivery
 
@@ -493,7 +492,6 @@ module.exports = {
                     "hotelDetails.description": 1,
                     "hotelDetails.images.hotelMainImage": 1,
                     ratings: 1,
-                    name: 1,
                     orderCount: { $size: "$order" }, // Include order count
                     distance: 1, // Include calculated distance
                 },
@@ -504,7 +502,7 @@ module.exports = {
 
             return result;
         } catch(error) {
-            console.error("Error getOfferDetails (from service file):", error);
+            console.error("Error getHotelByFilter (from service file):", error);
             return false;
         }
     },
@@ -521,77 +519,87 @@ module.exports = {
             };
 
             const regex = new RegExp(keyword, "i");
-    
-            const results = await userModel.aggregate([
-                // Apply geoNear stage to filter hotels by proximity to customer location
-                {
-                    $geoNear: {
-                        near: customerLocation.coordinates, // The user's current location
-                        distanceField: "distance", // Field to store the calculated distance
-                        spherical: true, // Use spherical geometry
-                        key: "hotelDetails.location"
+            // Initialize the aggregation pipeline
+                const pipeline = [];
+
+                // Conditionally add $geoNear stage if customerLocation.coordinates is provided
+                if (customerLocation.coordinates.length > 0) {
+                    pipeline.push({
+                        $geoNear: {
+                            near: {
+                                $geometry: {
+                                    type: "Point",
+                                    coordinates: customerLocation.coordinates, // [longitude, latitude]
+                                },
+                            },
+                            distanceField: "distance", // Field to store the calculated distance
+                            spherical: true, // Use spherical geometry
+                            key: "hotelDetails.location",
+                        },
+                    });
+                }
+
+        // Add $lookup stage
+        pipeline.push({
+            $lookup: {
+                from: "foods", // The name of the Food collection
+                localField: "_id", // The User model's primary key
+                foreignField: "hotelId", // The field in Food that links to User
+                as: "foodItems", // Output array name for the joined food items
+            },
+        });
+
+        // Add $unwind stages
+        pipeline.push(
+            { $unwind: "$foodItems" }, // Unwind the foodItems array from $lookup
+            { $unwind: "$foodItems.foodItems" } // Unwind the embedded foodItems array within each food document
+        );
+
+        // Add $facet stage for hotels and foodItems
+        pipeline.push({
+            $facet: {
+                hotels: [
+                    {
+                        $match: {
+                            "hotelDetails.name": { $regex: regex },
+                            role: OWNER,
+                        },
                     },
-                },
-                // Lookup food items from the Food collection
-                {
-                    $lookup: {
-                        from: "foods", // The name of the Food collection
-                        localField: "_id", // The User model's primary key
-                        foreignField: "hotelId", // The field in Food that links to User
-                        as: "foodItems", // Output array name for the joined food items
+                    {
+                        $project: {
+                            _id: "$_id",
+                            hotelName: "$hotelDetails.name",
+                            hotelDescription: "$hotelDetails.description",
+                            location: "$hotelDetails.location",
+                            distance: 1, // Include the calculated distance
+                        },
                     },
-                },
-                {
-                    $unwind: "$foodItems", // Unwind the foodItems array from $lookup
-                },
-                {
-                    $unwind: "$foodItems.foodItems", // Unwind the embedded foodItems array within each food document
-                },
-                // Apply facets for hotels and food items separately
-                {
-                    $facet: {
-                        // Match for hotel names
-                        hotels: [
-                            {
-                                $match: {
-                                    "hotelDetails.name": { $regex: regex },
-                                    role: OWNER,
-                                },
-                            },
-                            {
-                                $project: {
-                                    _id: "$_id",
-                                    hotelName: "$hotelDetails.name",
-                                    hotelDescription: "$hotelDetails.description",
-                                    location: "$hotelDetails.location",
-                                    distance: 1, // Include the calculated distance
-                                },
-                            },
-                            { $skip: options.skip }, // Skip documents for pagination
-                            { $limit: options.limit }, // Limit the number of documents
-                        ],
-                        // Match for food item names
-                        foodItems: [
-                            {
-                                $match: {
-                                    "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
-                                },
-                            },
-                            {
-                                $project: {
-                                    _id: "$_id",
-                                    hotelName: "$hotelDetails.name",
-                                    foodItemName: "$foodItems.foodItems.name",
-                                    foodDescription: "$foodItems.foodItems.description",
-                                    price: "$foodItems.foodItems.price",
-                                },
-                            },
-                            { $skip: options.skip }, // Skip documents for pagination
-                            { $limit: options.limit }, // Limit the number of documents
-                        ],
+                    { $skip: options.skip }, // Skip documents for pagination
+                    { $limit: options.limit }, // Limit the number of documents
+                ],
+                foodItems: [
+                    {
+                        $match: {
+                            "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
+                        },
                     },
-                },
-            ]);
+                    {
+                        $project: {
+                            _id: "$_id",
+                            hotelName: "$hotelDetails.name",
+                            foodItemName: "$foodItems.foodItems.name",
+                            foodDescription: "$foodItems.foodItems.description",
+                            price: "$foodItems.foodItems.price",
+                        },
+                    },
+                    { $skip: options.skip }, // Skip documents for pagination
+                    { $limit: options.limit }, // Limit the number of documents
+                ],
+            },
+        });
+
+        // Execute the aggregation pipeline
+        const results = await userModel.aggregate(pipeline);
     
             return results;
         } catch (error) {

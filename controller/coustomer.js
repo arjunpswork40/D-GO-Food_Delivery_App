@@ -31,7 +31,7 @@ class customerController {
     try {
       const allFoods = await Food.find({ available: true })
       // return res.status(200).json(allFoods)
-      return res.status(200).json(makeJsonResponse('Success', { message: "All foos ", allFoods }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('All foos', { ...allFoods }, {}, 200, true));
     } catch (error) {
       console.error(`Error foods:1 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
@@ -48,7 +48,7 @@ class customerController {
       const user = req.user;
       const result = await searchHotelsByKeyword(keyword, page, limit, user.customerDetails.currentLocation);
 
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Search result', { result }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
@@ -65,7 +65,7 @@ class customerController {
 
       const result = await getOfferDetails(page, limit);
 
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: result }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Offers', { result }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
@@ -90,14 +90,30 @@ class customerController {
 
       const user = req.user;
 
-      const highlightedHotels = await getHighlightedHotels(page, limit);
-      const restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+      let highlightedRestaurants = await getHighlightedHotels(page, limit);
+      let restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+
+      restaurantList = restaurantList.map(item =>  ({
+          _id: item._id,
+          image: item.hotelDetails.images.hotelMainImage[0],
+          name: item.hotelDetails.name,
+          description: item.hotelDetails.description,
+          ratings: item.ratings.averageRating,
+          orderCount: item.orderCount
+      }))
+
+      highlightedRestaurants = highlightedRestaurants.map(item => ({
+          _id: item._id,
+          image: item.hotelDetails.images.hotelMainImage[0],
+          name: item.hotelDetails.name,
+          description: item.hotelDetails.description,
+      }))
 
       const finalResult = {
         restaurantList: restaurantList,
-        highlightedHotels: highlightedHotels,
+        highlightedRestaurants: highlightedRestaurants,
       }
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: finalResult }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Success', { ...finalResult }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
@@ -114,7 +130,7 @@ class customerController {
       const user = req.user;
       const accountDetails = await getAccountDetails(user, page, limit);
 
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", data: accountDetails }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Success', { ...accountDetails }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
@@ -129,7 +145,7 @@ class customerController {
       const customerprofile = await User.findById(customerId, "name _id")
       // return res.status(200).json(foodDetails)
 
-      return res.status(200).json(makeJsonResponse('Success', { message: "customerprofile", customerprofile }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Customer Profile', { ...customerprofile }, {}, 200, true));
     } catch (error) {
       console.error(`Error foods:2 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
@@ -193,7 +209,7 @@ class customerController {
         topOffers: topOffers
       }
       
-      return res.status(200).json(makeJsonResponse('Success',  { message: "Home details", data:finalResult }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Home details',  { ...finalResult }, {}, 200, true));
       
     } catch (error) {
       console.error(`Error foods:3 ${error.code} - ${error.message}`);
@@ -216,6 +232,8 @@ class customerController {
         state: body.state,
         country: body.country,
         zipCode: body.zipCode,
+        lng: body.lng,
+        lat: body.lat
       }
       const userData = await userModel.findById(user._id);
 
@@ -242,13 +260,13 @@ class customerController {
       // Return success response
       return res.status(200).json(
           makeJsonResponse(
-              'Success',
-              { message: "Address added successfully", data: {
+              'Address added successfully',
+              {
                 savedAddresses: updatedUser.customerDetails.savedAddresses,
                 userId: updatedUser._id,
                 name: updatedUser.name,
                 email: updatedUser.email
-              } },
+              },
               {},
               200,
               true
@@ -301,13 +319,13 @@ class customerController {
       // Return success response
       return res.status(200).json(
         makeJsonResponse(
-          'Success',
-          { message: "Bank details updated successfully", user: {
+          'Bank details updated successfully',
+          { 
             bankDetails: userProfile.bankDetails,
             name: userProfile.name,
             userId: userProfile._id,
             email: userProfile.email
-          } },
+          },
           {},
           200,
           true
