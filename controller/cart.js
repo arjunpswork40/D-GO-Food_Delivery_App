@@ -1,4 +1,5 @@
 const Cart = require("../models/cart-model")
+const mongoose = require("mongoose");
 const Food = require("../models/food-model")
 const { makeJsonResponse } = require("../utils/response")
 const {
@@ -6,7 +7,7 @@ const {
   updateCart,
   deleteCartItem,
   removeOrDeleteFromCart
-} = require("./services/customer/order-services")
+} = require("./services/customer/cart-services")
 class CartClass {
 
   static async addToCart(req, res, next) {
@@ -129,8 +130,113 @@ class CartClass {
   static async allCartItem(req, res, next) {
     try {
       const user = req.user
-      const cartItems = await Cart.find({userId: user._id})
-      // return res.status(200).json(findUsersCart)
+      const cartResult = await Cart.aggregate([
+          // Lookup restaurant (User) details using restaurantId
+          {
+              $lookup: {
+                  from: "users",
+                  localField: "restaurantId",
+                  foreignField: "_id",
+                  as: "restaurantDetails"
+              }
+          },
+          { $unwind: "$restaurantDetails" }, // Expand restaurant details
+          
+          // Lookup all Food documents where any foodItem in the cart exists
+          {
+              $lookup: {
+                  from: "foods", // Food collection
+                  localField: "foodItems.foodId",
+                  foreignField: "foodItems._id",
+                  as: "foodDetails"
+              }
+          },
+
+          // Map and restructure foodItems with matched food details
+          {
+              $addFields: {
+                  foodItems: {
+                      $map: {
+                          input: "$foodItems",
+                          as: "cartItem",
+                          in: {
+                              _id: "$$cartItem._id",
+                              foodId: "$$cartItem.foodId",
+                              qty: "$$cartItem.qty",
+                              price: "$$cartItem.price",
+                              foodDetails: {
+                                  $arrayElemAt: [
+                                      {
+                                          $filter: {
+                                              input: {
+                                                  $reduce: {
+                                                      input: "$foodDetails",
+                                                      initialValue: [],
+                                                      in: { $concatArrays: ["$$value", "$$this.foodItems"] }
+                                                  }
+                                              },
+                                              as: "foodItem",
+                                              cond: { $eq: ["$$foodItem._id", "$$cartItem.foodId"] }
+                                          }
+                                      },
+                                      0
+                                  ]
+                              }
+                          }
+                      }
+                  }
+              }
+          },
+
+          // Final projection to include restaurant and structured food details
+          {
+              $project: {
+                  "userId": 1,
+                  "restaurantId": 1,
+                  "restaurantDetails.name": 1,
+                  "restaurantDetails.email": 1,
+                  "restaurantDetails.phone": 1,
+                  "foodItems": 1,
+                  "totalPrice": 1,
+                  "createdAt": 1,
+                  "updatedAt": 1
+              }
+          }
+      ]);
+
+      let cartItems = [];
+
+      for (let cart of cartResult) {
+          let entry = {
+            _id: cart._id,
+            customerId: cart.userId,
+            restaurantId: cart.restaurantId,
+            totalPrice: cart.totalPrice,
+            createdAt: cart.createdAt,
+            restaurantDetails: {
+              name: cart.restaurantDetails.name
+            },
+          }
+          let updatedFoodItems = [];
+          for(let food of cart.foodItems) {
+            let foodEntry = {
+              _id: food._id,
+              foodId: food.foodId,
+              qty: food.qty,
+              price: food.price,
+              foodDetails: {
+                image: food.foodDetails.images[0] ?? '',
+                name: food.foodDetails.name,
+                description: food.foodDetails.description,
+                category: food.foodDetails.category,
+              }
+            }
+            updatedFoodItems.push(foodEntry);
+          }
+          entry.foodItems = updatedFoodItems;
+          cartItems.push(entry);
+      }
+
       return res.status(200).json(makeJsonResponse('All cart items', { cartItems},{}, 200, true));
     } catch (error) {
       console.error(`Error foods: ${error.code} - ${error.message}`);

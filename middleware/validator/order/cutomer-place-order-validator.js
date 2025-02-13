@@ -5,7 +5,7 @@ const customerPlaceOrderValidator = [
     body('cartId')
         .notEmpty().withMessage('cart Id is required.')
         .isMongoId().withMessage('cart Id must be a valid MongoDB ObjectId.'),
-        body('addressId')
+    body('addressId')
         .notEmpty().withMessage('address Id is required.')
         .isMongoId().withMessage('address Id must be a valid MongoDB ObjectId.'),
     body('phone')
