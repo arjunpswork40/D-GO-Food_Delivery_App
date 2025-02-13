@@ -548,10 +548,13 @@ class controller {
                     vehicleNumber: deliveryPartnervehicleNumber,
                     licenseNumber: deliveryPartnerlicenseNumber,
                     currentLocation: {
-                        coordinates: {
-                            lat: deliveryPartnerlat,
-                            lng: deliveryPartnerlng,
-                        },
+                        type: "Point",
+                        coordinates: [
+                            parseFloat(deliveryPartnerlat),
+                            parseFloat(deliveryPartnerlng),
+                        ],
+                        lat: parseFloat(deliveryPartnerlat),
+                        lng: parseFloat(deliveryPartnerlng),
                     },
                 }
             }
