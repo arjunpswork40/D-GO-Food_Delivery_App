@@ -7,10 +7,17 @@ class order {
     static async checkout(req, res, next) {
         try {
             const userId = req.user
-            const itemsToCheckout = req.body.items
-            const itemsToCheckoutSplit = itemsToCheckout.split(",")
+            const {
+                cartId,
+                addressId,
+                phone,
+                paidThrough
+            } = req.body
 
             let totalPrice = 0
+
+            const cartItem = await Cart.findById(cartId)
+
             let itemSummary = []
             for (let eachItemInUserCart = 0; eachItemInUserCart < itemsToCheckoutSplit.length; eachItemInUserCart ++) {
                 const eachId = itemsToCheckoutSplit[eachItemInUserCart]
