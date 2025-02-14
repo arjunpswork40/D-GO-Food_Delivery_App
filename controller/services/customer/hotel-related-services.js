@@ -585,8 +585,9 @@ module.exports = {
                     },
                     {
                         $project: {
-                            _id: "$_id",
+                            restaurantId: "$_id",
                             hotelName: "$hotelDetails.name",
+                            foodId: "$foodItems.foodItems._id",
                             foodItemName: "$foodItems.foodItems.name",
                             foodDescription: "$foodItems.foodItems.description",
                             price: "$foodItems.foodItems.price",
