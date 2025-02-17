@@ -260,7 +260,7 @@ class customerController {
       // Return success response
       return res.status(200).json(
           makeJsonResponse(
-              'Address added successfully',
+            address._id ? 'Address updated successfully' : 'Address added successfully',
               {
                 savedAddresses: updatedUser.customerDetails.savedAddresses,
                 userId: updatedUser._id,
