@@ -571,6 +571,7 @@ module.exports = {
                             hotelName: "$hotelDetails.name",
                             hotelDescription: "$hotelDetails.description",
                             location: "$hotelDetails.location",
+                            images: "$hotelDetails.images.hotelMainImage",
                             distance: 1, // Include the calculated distance
                         },
                     },
@@ -591,6 +592,7 @@ module.exports = {
                             foodItemName: "$foodItems.foodItems.name",
                             foodDescription: "$foodItems.foodItems.description",
                             price: "$foodItems.foodItems.price",
+                            images: "$foodItems.foodItems.images"
                         },
                     },
                     { $skip: options.skip }, // Skip documents for pagination
