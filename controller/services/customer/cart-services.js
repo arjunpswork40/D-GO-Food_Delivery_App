@@ -193,14 +193,14 @@ module.exports = {
         }
     },
 
-    updateCart: async (cartId, foodId, itemCount) => {
+    updateCart: async (cartId, foodId, qty) => {
         try {
             
             const updateCartData = await Cart.findByIdAndUpdate(
                 cartId,
                 {
                     foodId: foodId,
-                    qty: itemCount
+                    qty: qty
                 },
                 {new: true}
             );

@@ -57,11 +57,11 @@ class CartClass {
       const {
               cartId,
               foodId,
-              itemCount
+              qty
             } = req.body;
       const user = req.user;
       
-      const updateCartData = await updateCart(cartId, foodId, itemCount, user);
+      const updateCartData = await updateCart(cartId, foodId, qty, user);
     
       return res.status(200).json(makeJsonResponse('Success', { message: "item updated in cart", data: updateCartData }, {}, 200, true));
     } catch (error) {
