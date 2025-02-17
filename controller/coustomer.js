@@ -3,6 +3,8 @@ const Food = require("../models/food-model");
 const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
 const { makeJsonResponse } = require("../utils/response");
+const mongoose = require("mongoose");
+
 const {
   getNearByHotelsWithPaginationAndCurrentLocation,
   getSpotlights,
@@ -25,6 +27,7 @@ const {
   getMainCategory
 } = require("./services/admin/admin-related-services");
 const userModel = require("../models/user-model");
+const { hotelDetailsValidator } = require("../middleware/validator/owner-hotel-details-validator");
 class customerController {
 
   static async allFoods(req, res, next) {
@@ -117,6 +120,89 @@ class customerController {
     } catch (error) {
       console.log(error)
       console.error(`Error foods:12 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async restaurantDetails(req, res, next) {
+    try {
+      const userId = req.params.restaurantId; // Get userId from request params
+      const page = parseInt(req.params.page) || 1;
+      const limit = parseInt(req.params.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      // Convert userId to ObjectId if it's a string
+      const objectId = new mongoose.Types.ObjectId(userId);
+
+      // Fetch user details
+      const user = await User.findById(objectId).lean();
+      if (!user) {
+        return res.status(404).json(makeJsonResponse('User not found', {}, {}, 404, false));
+      }
+
+      // Fetch paginated food items where hotelId = userId
+      
+        const foodItems = await Food.findOne(
+          { hotelId: objectId }, 
+          { 
+              foodItems: { $slice: [skip, limit] }, // Apply pagination on foodItems array
+              _id: 1, // Optional: Keep necessary fields
+              hotelId: 1, 
+              createdAt: 1 
+          }
+      ).lean();
+
+
+      const totalFoodItems = await Food.aggregate([
+        { $match: { hotelId: objectId } },
+        { $project: { total: { $size: "$foodItems" } } } // Count total foodItems in the array
+    ]);
+
+    const totalItems = totalFoodItems.length > 0 ? totalFoodItems[0].total : 0;
+
+
+        let updatedFoodItems = [];
+
+        if(foodItems.foodItems.length > 0) {
+          for(let item of foodItems?.foodItems) {
+            
+              const foodEntry = {
+                image: item?.images[0] ?? '',
+                foodId: item._id,
+                name: item.name,
+                description: item.description,
+                category: item.category,
+                price: item.price
+              }
+            updatedFoodItems.push(foodEntry);
+          }
+        }
+
+        const restaurantDetails = {
+          userId: user._id,
+          restaurantName: user.hotelDetails.name,
+          description: user.hotelDetails.description,
+          location: user.hotelDetails.location,
+          contactNumber: user.hotelDetails.contactNumber,
+          openingHours: user.hotelDetails.openingHours,
+          images: user.hotelDetails.images,
+          ratings: user.ratings.averageRating,
+          email: user.email,
+          phone: user.phone,
+          foodItems: updatedFoodItems,
+          pagination: {
+            currentPage: page,
+            limit,
+            totalItems,
+            totalPages: Math.ceil(totalItems / limit),
+          }
+        }
+
+        return res.status(200).json(makeJsonResponse('Success', { ...restaurantDetails }, {}, 200, true));
+
+    } catch(error) {
+      console.log(error)
+      console.error(`Error restaurantDetails:12 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }

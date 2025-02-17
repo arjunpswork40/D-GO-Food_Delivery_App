@@ -4,7 +4,7 @@ const controller = require("../controller/coustomer")
 const auth = require("../middleware/auth-middleware")
 const {customerAdressUpdateValidator} = require("../middleware/validator/customer/customer-address-update-validator")
 const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer")
-
+const {getRestaurantDetailsValidator} = require("../middleware/validator/customer/get-restaurant-detail-validator")
 // router.get(
 //     "/all",
 //     auth.decodeToken,
@@ -33,6 +33,13 @@ router.get(
     "/restaurants/:page/:limit",
     auth.decodeToken,
     controller.restaurantList
+)
+
+router.get(
+    "/restaurant/:restaurantId/:page/:limit",
+    auth.decodeToken,
+    getRestaurantDetailsValidator,
+    controller.restaurantDetails
 )
 
 router.get(
