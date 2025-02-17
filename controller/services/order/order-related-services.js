@@ -131,6 +131,11 @@ module.exports = {
 
                 await deliveryPartnerNotification.save();
 
+                await Order.findByIdAndUpdate(updatedData._id,{deliveryPartnerId: nearbyDeliveryPartners._id},{
+                    new: true,
+                    runValidators: true
+                })
+
                 finalResponseFormat.status = true;
                 finalResponseFormat.message = "oreder status updated";
                 finalResponseFormat.data = updatedData;
