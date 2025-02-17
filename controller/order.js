@@ -5,6 +5,7 @@ const Cart = require("../models/cart-model")
 const { makeJsonResponse } = require("../utils/response")
 const {USER_TYPES}= require("../constants/user/user-constants")
 const {ORDER_STATUS}= require("../constants/order/order-statuses")
+const mongoose = require('mongoose');
 
 const {
     placeOrder,
@@ -77,6 +78,99 @@ class order {
         return res.status(200).json(allUserOrder)
     }
 
+    static async deliveryPartnerOrderList(req, res, next) {
+        const user = req.user;
+        
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
+    
+            // Fetch orders assigned to the delivery partner
+            const orderList = await Order.find({ deliveryPartnerId: user._id })
+                .sort({ createdAt: -1 }) // Sort latest orders first
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+                if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No orders found', { orderList: [] }, {}, 200, true));
+            }
+    
+            // Extract all foodIds from order items
+            const foodIds = orderList.flatMap(order => order.items.map(item => item.foodId));
+    
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+    
+            // Map food details back to orders
+            const ordersWithFoodDetails = orderList.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+    
+            return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orderList: lastEntry }, {}, 200, true));
+    
+        } catch (error) {
+            console.log("Error from controller deliveryPartnerOrderList function => ", error);
+            return res.status(500).json(makeJsonResponse('Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
+        }
+    }
+    
+
     static async prepareOrder(req, res, next) {
         try {
             const user = req.user;
@@ -92,11 +186,7 @@ class order {
                     status: ORDER_STATUS.CUSTOMER_PLACED_ORDER
                 }
             );
-            console.log("order===>",order)
-            console.log("Order  ddd===>",{
-                _id: orderId,
-                status: ORDER_STATUS.CUSTOMER_PLACED_ORDER
-            })
+          
             if (!order) {
                 return res.status(400).json(
                     makeJsonResponse(

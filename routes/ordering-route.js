@@ -59,6 +59,12 @@ router.post(
 )
 
 router.get(
+    "/delivery-partner/order-requests/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerOrderList
+)
+
+router.get(
     "/",
     auth.decodeToken,
     controller.orderHistroy
