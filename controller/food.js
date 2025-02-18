@@ -46,7 +46,10 @@ class foodController{
           name: finalData.name,
           description: finalData.description,
           category: finalData.category,
-          price: finalData.price
+          price: finalData.price,
+          deliveryFee : 54.00,
+          taxesAndCharges: 26.67,
+          totalPay: finalData.price + 54.00 + 26.67
         }
 
         finalData.images = finalData.images[0];
