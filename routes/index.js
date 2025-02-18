@@ -72,6 +72,11 @@ router.use(
 )
 
 router.use(
+    "/payment",
+    require("./payment-route.js")
+)
+
+router.use(
     "/admin",
     require("./admin-route")
 )
