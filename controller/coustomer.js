@@ -368,7 +368,6 @@ class customerController {
 
 
 
-
   static async updateBankDetails(req, res, next) {
     const { body } = req;
     const user = req.user; // Assuming the authenticated user details are in req.user

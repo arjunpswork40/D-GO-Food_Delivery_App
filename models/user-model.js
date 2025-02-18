@@ -151,6 +151,11 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              street: { type: String },
+              city: { type: String },
+              state: { type: String },
+              country: { type: String },
+              zipCode: { type: String },
               lat: { type: Number, required: false }, 
               lng: { type: Number, required: false }, 
             },

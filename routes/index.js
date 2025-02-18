@@ -67,6 +67,11 @@ router.use(
 )
 
 router.use(
+    "/address",
+    require("./address-route.js")
+)
+
+router.use(
     "/admin",
     require("./admin-route")
 )
