@@ -315,7 +315,7 @@ class controller {
             locationCoordinatesLat,
             locationCoordinatesLng,
         } = req.body
-        console.log(locationCoordinatesLat, locationCoordinatesLng);
+
         // const hotelImages = req.files?.hotelImages?.length > 0
         //     ? req.files.hotelImages.map(item => item.path)
         //     : [];
