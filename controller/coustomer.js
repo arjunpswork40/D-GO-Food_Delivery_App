@@ -4,6 +4,8 @@ const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
 const { makeJsonResponse } = require("../utils/response");
 const mongoose = require("mongoose");
+const { BCRYPT_SALT } = require("../config/index");
+const bcrypt = require("bcrypt");
 
 const {
   getNearByHotelsWithPaginationAndCurrentLocation,
@@ -27,7 +29,8 @@ const {
   getMainCategory
 } = require("./services/admin/admin-related-services");
 const userModel = require("../models/user-model");
-const { hotelDetailsValidator } = require("../middleware/validator/owner-hotel-details-validator");
+
+const { USER_TYPES } = require("../constants/user/user-constants");
 class customerController {
 
   static async allFoods(req, res, next) {
@@ -300,6 +303,44 @@ class customerController {
     } catch (error) {
       console.error(`Error foods:3 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error3', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async forgotPassword(req, res, next) { 
+    const { 
+      currentPassword,
+      newPassword,
+      confirmPassword
+     } = req.body;
+    const user = req.user;
+    try {
+
+      if( user.role !== USER_TYPES.CUSTOMER) {
+        return res.status(400).json(makeJsonResponse('User not found', {}, { email: user.email }, 400, false)); 
+      }
+      const userData = await userModel.findById(user._id);
+      if(!userData) {
+        return res.status(400).json(makeJsonResponse('User not found', {}, { email: user.email }, 400, false));
+      }
+
+      const isMatch = bcrypt.compareSync(currentPassword, userData.password);
+      if (!isMatch) {
+        return res.status(400).json(makeJsonResponse('Current password is incorrect', {}, { email: user.email }, 400, false));
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json(makeJsonResponse('New passwords do not match', {}, { email: user.email }, 400, false));
+      }
+
+      userData.password = bcrypt.hashSync(newPassword, BCRYPT_SALT);
+      await userData.save();
+
+      return res.status(200).json(makeJsonResponse('Password updated successfully', { email: user.email }, {}, 200, true));
+  
+    } catch (error) {
+      console.log(error)
+      console.error(`Error foods:4 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
