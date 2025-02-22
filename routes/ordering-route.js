@@ -65,9 +65,15 @@ router.get(
 )
 
 router.get(
-    "/",
+    "/customer/list/:page/:limit",
     auth.decodeToken,
     controller.orderHistroy
+)
+
+router.get(
+    "/owner/list/:page/:limit",
+    auth.decodeToken,
+    controller.ownerOrderHistroy
 )
 
 module.exports = router

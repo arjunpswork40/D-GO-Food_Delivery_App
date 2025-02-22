@@ -166,7 +166,7 @@ class customerController {
 
         let updatedFoodItems = [];
 
-        if(foodItems.foodItems.length > 0) {
+        if(foodItems && foodItems.foodItems.length > 0) {
           for(let item of foodItems?.foodItems) {
             
               const foodEntry = {

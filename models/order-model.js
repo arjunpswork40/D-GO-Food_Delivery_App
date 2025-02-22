@@ -138,6 +138,9 @@ const orderSchema = new Schema(
         },
         
         logs: [logSchema]
+    },
+    {
+        timestamps: true
     }
 )
 
