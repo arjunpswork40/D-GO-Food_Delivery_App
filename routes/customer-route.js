@@ -1,9 +1,11 @@
-const express = require("express")
-const router = express.Router()
-const controller = require("../controller/coustomer")
-const auth = require("../middleware/auth-middleware")
-const {customerAdressUpdateValidator} = require("../middleware/validator/customer/customer-address-update-validator")
-const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer")
+const express = require("express");
+const router = express.Router();
+const controller = require("../controller/coustomer");
+const auth = require("../middleware/auth-middleware");
+const {customerAdressUpdateValidator} = require("../middleware/validator/customer/customer-address-update-validator");
+const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer");
+const {getRestaurantDetailsValidator} = require("../middleware/validator/customer/get-restaurant-detail-validator");
+const forgotPasswordValidator = require("../middleware/validator/forgot-password-validator");
 
 // router.get(
 //     "/all",
@@ -36,6 +38,13 @@ router.get(
 )
 
 router.get(
+    "/restaurant/:restaurantId/:page/:limit",
+    auth.decodeToken,
+    getRestaurantDetailsValidator,
+    controller.restaurantDetails
+)
+
+router.get(
     "/account/:page/:limit",
     auth.decodeToken,
     controller.accountDetails
@@ -52,6 +61,13 @@ router.post(
     auth.decodeToken,
     customerAdressUpdateValidator,
     controller.CustomeraddressAdd
+)
+
+router.post(
+    "/forgot-password",
+    auth.decodeToken,
+    forgotPasswordValidator,
+    controller.forgotPassword
 )
 
 router.post(

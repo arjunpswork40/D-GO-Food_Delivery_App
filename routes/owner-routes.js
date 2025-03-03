@@ -1,13 +1,15 @@
-const express = require("express")
-const router = express.Router()
-const controller = require("../controller/owner")
-const auth = require("../middleware/auth-middleware")
-const { uploadMultipleFiles } = require("../utils/fileUploader")
-const {isFilesExist} = require("../middleware/fileChecker")
-const path=require("path")
-const {ownerBankDetailsValidator} = require("../middleware/validator/owner-bank-details-validator")
-const {hotelDetailsValidator} = require("../middleware/validator/owner-hotel-details-validator")
+const express = require("express");
+const router = express.Router();
+const controller = require("../controller/owner");
+const auth = require("../middleware/auth-middleware");
+const { uploadMultipleFiles } = require("../utils/fileUploader");
+const {isFilesExist} = require("../middleware/fileChecker");
+const path=require("path");
+const {ownerBankDetailsValidator} = require("../middleware/validator/owner-bank-details-validator");
+const {hotelDetailsValidator} = require("../middleware/validator/owner-hotel-details-validator");
 const multer = require("multer");
+const forgotPasswordValidator = require("../middleware/validator/forgot-password-validator");
+
 
 const existingPath=path.resolve("./uploads")
 
@@ -54,5 +56,12 @@ router.post(
     uploadFields,
     hotelDetailsValidator,
     controller.updateHotelDetails
+)
+
+router.post(
+  "/forgot-password",
+  auth.decodeToken,
+  forgotPasswordValidator,
+  controller.forgotPassword
 )
 module.exports = router

@@ -8,7 +8,7 @@ const updateCartValidator = [
     body('cartId')
         .notEmpty().withMessage('Order ID is required.')
         .isMongoId().withMessage("Invalid Order ID format."),
-    body('itemCount')
+    body('qty')
         .notEmpty().withMessage('Item count is required.')
         .isInt({ gt: 0 }).withMessage('Item count must be a positive integer.'),
     (req, res, next) => {

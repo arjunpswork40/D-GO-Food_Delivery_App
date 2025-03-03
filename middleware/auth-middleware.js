@@ -88,6 +88,7 @@ class authorisation {
             email: user.email,
             role: user.role,
             firstName: user.firstName,
+            userId: user._id,
             token: this.genToken(user)
         }
     }

@@ -151,6 +151,11 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              street: { type: String },
+              city: { type: String },
+              state: { type: String },
+              country: { type: String },
+              zipCode: { type: String },
               lat: { type: Number, required: false }, 
               lng: { type: Number, required: false }, 
             },
@@ -209,6 +214,7 @@ const userSchema = new Schema(
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 userSchema.index({ "hotelDetails.location": "2dsphere" });
+userSchema.index({ "deliveryPartnerDetails.currentLocation": "2dsphere" });
 userSchema.index({ "hotelDetails.priorityIndex": -1 });
 userSchema.index({ "ratingd.ratings.averageRating": -1 });
 

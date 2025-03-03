@@ -558,7 +558,7 @@ module.exports = {
         // Add $facet stage for hotels and foodItems
         pipeline.push({
             $facet: {
-                hotels: [
+                restaurants: [
                     {
                         $match: {
                             "hotelDetails.name": { $regex: regex },
@@ -568,9 +568,10 @@ module.exports = {
                     {
                         $project: {
                             _id: "$_id",
-                            hotelName: "$hotelDetails.name",
-                            hotelDescription: "$hotelDetails.description",
+                            restaurantName: "$hotelDetails.name",
+                            restaurantDescription: "$hotelDetails.description",
                             location: "$hotelDetails.location",
+                            images: "$hotelDetails.images.hotelMainImage",
                             distance: 1, // Include the calculated distance
                         },
                     },
@@ -585,11 +586,13 @@ module.exports = {
                     },
                     {
                         $project: {
-                            _id: "$_id",
-                            hotelName: "$hotelDetails.name",
+                            restaurantId: "$_id",
+                            restaurantName: "$hotelDetails.name",
+                            foodId: "$foodItems.foodItems._id",
                             foodItemName: "$foodItems.foodItems.name",
                             foodDescription: "$foodItems.foodItems.description",
                             price: "$foodItems.foodItems.price",
+                            images: "$foodItems.foodItems.images"
                         },
                     },
                     { $skip: options.skip }, // Skip documents for pagination

@@ -4,6 +4,8 @@ const controller = require("../controller/index")
 const  auth = require("../middleware/auth-middleware")
 const {hotelOwnerValidationRules} = require("../middleware/validator/owner-registration-validator")
 const {customerRegistrationValidator} = require("../middleware/validator/customer-registration-validator.js")
+const signupValidator = require("../middleware/validator/delivery-partner/signup-validator.js")
+
 const path = require('path');
 const multer = require("multer");
 
@@ -67,6 +69,16 @@ router.use(
 )
 
 router.use(
+    "/address",
+    require("./address-route.js")
+)
+
+router.use(
+    "/payment",
+    require("./payment-route.js")
+)
+
+router.use(
     "/admin",
     require("./admin-route")
 )
@@ -89,6 +101,10 @@ router.use(
 router.use(
     "/language",
     require("./language-route")
+)
+router.use(
+    "/delivery-partner",
+    require("./delivery-partner-route")
 )
 
 
@@ -142,6 +158,7 @@ router.post(
 // Delivery Partner profile
 router.post(
     "/delivery-partner/signup",
+    signupValidator,
     controller.newDeliveryPartner
 )
     
