@@ -66,17 +66,17 @@ const orderSchema = new Schema(
         },
         customerId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Users',
             required: false,
         },
         restaurantId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Users',
             required: false,
         },
         deliveryPartnerId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Users',
             required: false,
         },
         items: {
