@@ -192,7 +192,7 @@ const userSchema = new Schema(
             },
           },
 
-        order: [
+        orders: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "Order"
@@ -204,7 +204,8 @@ const userSchema = new Schema(
              trim: true,
              enum: ["customer", "owner", "delivery_partner", "admin"],
              default: "customer"
-        }
+        },
+        profile_image: { type: String, required: false },
     },
     
     {

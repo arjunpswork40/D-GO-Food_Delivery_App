@@ -55,6 +55,15 @@ module.exports = {
                 },
                 { new: true, runValidators: true } 
             )
+            await User.findByIdAndUpdate(
+                cartItem.restaurantId,
+                {
+                    $push: {
+                        orders: savedOrder._id,
+                    },
+                },
+                { new: true, runValidators: true } 
+            )
             return savedOrder;
 
         } catch(error) {
