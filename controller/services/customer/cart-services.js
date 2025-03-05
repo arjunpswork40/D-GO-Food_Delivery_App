@@ -195,22 +195,53 @@ module.exports = {
 
     updateCart: async (cartId, foodId, qty) => {
         try {
-            
-            const updateCartData = await Cart.findByIdAndUpdate(
+            const foodItem = await Food.findOne(
+                { "foodItems._id": foodId },
+                { "foodItems.$": 1 }
+            );
+
+            if (!foodItem) {
+                return false;
+            }
+
+            const price = foodItem.foodItems[0].price;
+            const totalPrice = price * qty;
+
+            const updatedCartData = await Cart.findByIdAndUpdate(
                 cartId,
                 {
-                    foodId: foodId,
-                    qty: qty
+                    $set: {
+                        "foodItems.$[elem].qty": qty,
+                        "foodItems.$[elem].price": price,
+                        totalPrice: totalPrice
+                    }
                 },
-                {new: true}
+                {
+                    arrayFilters: [{ "elem.foodId": foodId }],
+                    new: true
+                }
             );
-            
-            if(!updateCartData) {
+
+            if (!updatedCartData) {
                 return false;
-            } 
+            }
+
+            return updatedCartData;
+            // const updateCartData = await Cart.findByIdAndUpdate(
+            //     cartId,
+            //     {
+            //         foodId: foodId,
+            //         qty: qty
+            //     },
+            //     {new: true}
+            // );
+            
+            // if(!updateCartData) {
+            //     return false;
+            // } 
 
 
-            return updateCartData;
+            // return updateCartData;
         } catch (err) {
             console.error("Error in updateCartData (from service file):", err);
             return false;

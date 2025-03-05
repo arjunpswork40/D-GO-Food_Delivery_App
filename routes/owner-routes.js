@@ -8,6 +8,8 @@ const path = require("path");
 const { ownerBankDetailsValidator } = require("../middleware/validator/owner-bank-details-validator");
 const { hotelDetailsValidator } = require("../middleware/validator/owner-hotel-details-validator");
 const { addFoodByOwner } = require("../middleware/validator/food/add-food-by-owner");
+const { removeFoodItemByOwnerValidator } = require("../middleware/validator/food/remove-food-by-owner");
+const { updateFoodItemByOwnerValidator } = require("../middleware/validator/food/update-food-item-by-owner");
 
 const multer = require("multer");
 const fs = require("fs");
@@ -107,7 +109,7 @@ router.get(
 )
 
 const uploadFoodImages = uploads.fields([
-  { name: "foodImage", maxCount: 6 },
+  { name: "foodImages", maxCount: 6 },
 ]);
 router.post(
   "/add-food",
@@ -158,7 +160,37 @@ router.get(
 router.get(
   "/food-unavailable-list/:page/:limit",
   auth.decodeToken,
-  controller.getAvailableFoodList
+  controller.getUnAvailableFoodList
+);
+
+router.post(
+  "/remove-food-item",
+  auth.decodeToken,
+  removeFoodItemByOwnerValidator,
+  controller.removeFoodItemByOwner
+);
+
+router.post(
+  "/update-food-item",
+  (req, res, next) => {
+    uploadFoodImages(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_UNEXPECTED_FILE") {
+          response = makeJsonResponse(`File Validation error.`, {}, { error: "Only 6 images are allowed." }, 400, false);
+          return res.status(400).json(response);
+        }
+        response = makeJsonResponse(`File Validation error.`, {}, { error: err.message }, 400, false);
+        return res.status(400).json(response);
+      } else if (err) {
+        response = makeJsonResponse(`File Validc1ation error.`, {}, { error: err.message }, 400, false);
+        return res.status(400).json(response);
+      }
+      next();
+    });
+  },
+  auth.decodeToken,
+  updateFoodItemByOwnerValidator,
+  controller.updateFoodItemByOwner
 );
 
 
