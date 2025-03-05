@@ -7,7 +7,7 @@ const bcrypt = require("bcrypt");
 const { BCRYPT_SALT } = require("../config/index");
 const foodModel = require("../models/food-model");
 const { getHomeDetailsWithOrderData } = require("./services/owner/home-details-service");
-const { getAllFoodList,getAvailableAllFoodList,getUnAvailableAllFoodList } = require("./services/food/food-service");
+const { getAllFoodList,getAvailableAllFoodList,getUnAvailableAllFoodList,removeFoodItemByOwnerAction } = require("./services/food/food-service");
 class Owner {
 
     // static async userProfile(req, res, next) {
@@ -413,11 +413,13 @@ class Owner {
                 await updateFood.save();
             }
 
+            const addedFood = updateFood.foodItems[updateFood.foodItems.length - 1];
+
             return res.status(200).json(
                 makeJsonResponse(
                     'Food added successfully',
                     {
-                        foodDetails: food,
+                        foodDetails: addedFood,
                         user: {
                             name: user.name,
                             _id: user._id,
@@ -485,7 +487,7 @@ class Owner {
             if (!foddList.status) {
                 return res.status(400).json(makeJsonResponse('Home details not found', {}, { email: user.email }, 400, false));
             }
-            return res.status(200).json(makeJsonResponse('Home details', { ...foddList.data }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('Home details', { ...foddList.data[0] }, {}, 200, true));
         } catch (error) {
             console.log("error in homeDetails(controller) :: ", error)
             return res.status(500).json(
@@ -514,9 +516,9 @@ class Owner {
         try {
             const foddList = await getAvailableAllFoodList(user._id, skip, limit);
             if (!foddList.status) {
-                return res.status(400).json(makeJsonResponse('Unavailable foods details not found', {}, { email: user.email }, 400, false));
+                return res.status(400).json(makeJsonResponse('Available foods details not found', {}, { email: user.email }, 400, false));
             }
-            return res.status(200).json(makeJsonResponse('Unavailable food details', { ...foddList.data }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('Available food details', { ...foddList.data[0] }, {}, 200, true));
         } catch (error) {
             console.log("error in getAvailableFoodList(controller) :: ", error)
             return res.status(500).json(
@@ -543,13 +545,88 @@ class Owner {
         }
 
         try {
-            const foddList = await getAllUnAvailableFoodList(user._id, skip, limit);
+            const foddList = await getUnAvailableAllFoodList(user._id, skip, limit);
             if (!foddList.status) {
                 return res.status(400).json(makeJsonResponse('Unavailable foods not found', {}, { email: user.email }, 400, false));
             }
-            return res.status(200).json(makeJsonResponse('Unavailable food details', { ...foddList.data }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('Unavailable food details', { ...foddList.data[0] }, {}, 200, true));
         } catch (error) {
             console.log("error in getUnAvailableFoodList(controller) :: ", error)
+            return res.status(500).json(
+                makeJsonResponse(
+                    'Error',
+                    { message: error.message || "Internal error occurred" },
+                    {},
+                    500,
+                    false
+                )
+            );
+        }
+    }
+
+    static async removeFoodItemByOwner(req, res, next) {
+        
+        const user = req.user;
+        const foodId = req.body.foodId;
+
+        if (user.role !== USER_TYPES.OWNER) {
+            return res.status(400).json(makeJsonResponse('Owner can only remove food from his list', {}, { email: user.email }, 400, false));
+        }
+
+        try {
+            const foddList = await removeFoodItemByOwnerAction(user._id, foodId);
+            if (!foddList.status) {
+                return res.status(400).json(makeJsonResponse('food not found', {}, { email: user.email }, 400, false));
+            }
+            return res.status(200).json(makeJsonResponse('Food removed successfuly', { ...foddList.data }, {}, 200, true));
+        } catch (error) {
+            console.log("error in removeFoodItemByOwner(controller) :: ", error)
+            return res.status(500).json(
+                makeJsonResponse(
+                    'Error',
+                    { message: error.message || "Internal error occurred" },
+                    {},
+                    500,
+                    false
+                )
+            );
+        }
+    }
+
+    static async updateFoodItemByOwner(req, res, next) {
+        const user = req.user;
+        const { foodId, name, description, available, category, price } = req.body;
+        const images = req.files.foodImages?.map(item => item.path) || [];
+
+        if (user.role !== USER_TYPES.OWNER) {
+            return res.status(400).json(makeJsonResponse('Owner can only update food from his list', {}, { email: user.email }, 400, false));
+        }
+
+        try {
+            const foodItem = await foodModel.findOneAndUpdate(
+                { hotelId: user._id, "foodItems._id": foodId },
+                {
+                    $set: {
+                        "foodItems.$.name": name,
+                        "foodItems.$.description": description,
+                        "foodItems.$.available": available,
+                        "foodItems.$.category": category,
+                        "foodItems.$.price": price
+                    },
+                    $push: {
+                        "foodItems.$.images": { $each: images }
+                    }
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!foodItem) {
+                return res.status(400).json(makeJsonResponse('Food item not found', {}, { email: user.email }, 400, false));
+            }
+
+            return res.status(200).json(makeJsonResponse('Food item updated successfully', { foodItem }, {}, 200, true));
+        } catch (error) {
+            console.log("error in updateFoodItemByOwner(controller) :: ", error);
             return res.status(500).json(
                 makeJsonResponse(
                     'Error',

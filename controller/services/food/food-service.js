@@ -98,7 +98,7 @@ module.exports = {
                             $filter: {
                                 input: "$foodItems",
                                 as: "item",
-                                cond: { $eq: ["$$item.available", true] } // Filter available items
+                                cond: { $eq: ["$$item.available", false] } // Filter available items
                             }
                         }
                     }
@@ -153,7 +153,7 @@ module.exports = {
                             $filter: {
                                 input: "$foodItems",
                                 as: "item",
-                                cond: { $eq: ["$$item.available", false] } // Filter available items
+                                cond: { $eq: ["$$item.available", true] } // Filter available items
                             }
                         }
                     }
@@ -183,6 +183,42 @@ module.exports = {
             finalResult.message = "Food items found.";
             finalResult.status = true;
             finalResult.data = result;
+
+            return finalResult;
+
+        } catch (error) {
+            console.log("error from getAvailableAllFoodList (service function) :: ", error)
+            finalResult.message = error.message || "Internal error occurred";
+            return finalResult;
+        }
+    },
+
+    removeFoodItemByOwnerAction: async (hotelId, foodId) => {
+        let finalResult = {
+            message: "Internal error occured.",
+            status: false,
+            data: []
+        };
+
+        try {
+
+            const updateResult = await Food.updateOne(
+                { hotelId },
+                { $pull: { foodItems: { _id: foodId } } }
+            );
+
+            if (updateResult.n === 0) {
+                finalResult.message = "No matching food item found to remove.";
+                finalResult.status = false;
+            } else {
+                const updatedData = await Food.findOne(
+                    { hotelId },
+                    { foodItems: 1 } // Only return the foodItems field
+                );
+                finalResult.message = "Food item removed successfully.";
+                finalResult.status = true;
+                finalResult.data = updatedData._doc; // Return only the _doc field of the updated data model
+            }
 
             return finalResult;
 
