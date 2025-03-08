@@ -33,7 +33,7 @@ module.exports = {
                         return result.message = "food item not found in given restaurant.";
                     } 
 
-                    const updatedTotalPrice = cartEntry.totalPrice + (Number(qty) * price.price);
+                    const updatedTotalPrice = parseFloat((cartEntry.totalPrice + (Number(qty) * price.price)).toFixed(2));
 
                     // Update items array
                     let items = await updateItemArray(cartEntry.foodItems, foodId, qty, restaurantId,true); 
@@ -68,9 +68,9 @@ module.exports = {
                         foodItems: [{
                             foodId,
                             qty,
-                            price: price.price,
+                            price: parseFloat(price.price.toFixed(2)),
                         }],
-                        totalPrice: Number(qty) * Number(price.price)
+                        totalPrice: parseFloat((Number(qty) * Number(price.price)).toFixed(2))
                     });
                     result.cartData = cartData;
                     result.status = true;
@@ -124,10 +124,10 @@ module.exports = {
                     } 
 
                     let entryQtyCheck = cartEntry?.foodItems.find(i => i.foodId.toString() === foodId);
-                    let updatedTotalPrice = cartEntry.totalPrice - (Number(qty) * price.price);
+                    let updatedTotalPrice = parseFloat((cartEntry.totalPrice - (Number(qty) * price.price)).toFixed(2));
 
                     if(qty > entryQtyCheck?.qty) {
-                        updatedTotalPrice = cartEntry.totalPrice - (Number(entryQtyCheck.qty) * price.price);
+                        updatedTotalPrice = parseFloat((cartEntry.totalPrice - (Number(entryQtyCheck.qty) * price.price)).toFixed(2));
                     }
 
                     if(cartEntry.foodItems.length === 0) {
@@ -205,7 +205,7 @@ module.exports = {
             }
 
             const price = foodItem.foodItems[0].price;
-            const totalPrice = price * qty;
+            const totalPrice = parseFloat((price * qty).toFixed(2));
 
             const updatedCartData = await Cart.findByIdAndUpdate(
                 cartId,
