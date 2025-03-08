@@ -225,10 +225,10 @@ class CartClass {
               qty: food.qty,
               price: food.price,
               foodDetails: {
-                image: food.foodDetails.images[0] ?? '',
-                name: food.foodDetails.name,
-                description: food.foodDetails.description,
-                category: food.foodDetails.category,
+                image: food.foodDetails?.images[0] ?? '',
+                name: food.foodDetails?.name,
+                description: food.foodDetails?.description,
+                category: food.foodDetails?.category,
               }
             }
             updatedFoodItems.push(foodEntry);
