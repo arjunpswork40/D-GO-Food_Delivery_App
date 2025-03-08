@@ -403,15 +403,21 @@ module.exports = {
 
     getAccountDetails: async(user, page, limit) => {
         try {
-            let finalResult = {
-                name: user.name,
-                phone: user.phone,
-                email: user.email,
-                bankDetails: user.bankDetails,
-                address: user.customerDetails.savedAddresses
-            }
 
-            let totalOrders = user.customerDetails.orders;
+            const userData = await userModel.findById(user._id);
+            
+            let addressData = userData.customerDetails.savedAddresses;
+
+            let finalResult = {
+                name: userData.name,
+                phone: userData.phone,
+                email: userData.email,
+                bankDetails: userData.bankDetails,
+                address: addressData
+            }
+            console.log(addressData)
+
+            let totalOrders = userData.customerDetails.orders;
 
             const startIndex = (page - 1) * limit; // Calculate the starting index
             const endIndex = startIndex + limit;       // Calculate the ending index

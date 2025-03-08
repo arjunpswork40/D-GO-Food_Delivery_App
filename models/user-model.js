@@ -20,6 +20,7 @@ const addressSchema = new Schema(
     state: { type: String },
     country: { type: String },
     zipCode: { type: String },
+    primaryAddress: { type: Boolean, default: false },
     lat: { type: Number, required: false }, 
     lng: { type: Number, required: false }, 
   },

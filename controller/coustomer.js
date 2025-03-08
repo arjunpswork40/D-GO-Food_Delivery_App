@@ -348,7 +348,6 @@ class customerController {
     const { body } = req;
     const { user } = req;
     try {
-
       const address = {
         _id: body._id, // Use the _id if updating an existing address
         label: body.label,
@@ -360,44 +359,52 @@ class customerController {
         country: body.country,
         zipCode: body.zipCode,
         lng: body.lng,
-        lat: body.lat
+        lat: body.lat,
+        primaryAddress: body.primaryAddress || false
       }
       const userData = await userModel.findById(user._id);
 
-      if(!userData) {
-        return res.status(400).json(makeJsonResponse('Failed', {}, { message: "User not found", data:body }, 400, false));
+      if (!userData) {
+        return res.status(400).json(makeJsonResponse('Failed', {}, { message: "User not found", data: body }, 400, false));
       }
 
-      if(body._id) {
-          // If _id exists, find the address by _id and update it
-          const existingAddress = userData.customerDetails.savedAddresses.id(address._id);
+      if (body.primaryAddress) {
+        // If primaryAddress is true, set all other addresses' primaryAddress to false
+        userData.customerDetails.savedAddresses.forEach(addr => {
+          addr.primaryAddress = false;
+        });
+      }
 
-          if (existingAddress) {
-            // Update the fields of the existing address
-            Object.assign(existingAddress, address);
-          } else {
-            return res.status(400).json(makeJsonResponse('Failed', {}, { message: "Address with the provided _id not found", data:body }, 400, false));
-          }
+      if (body._id) {
+        // If _id exists, find the address by _id and update it
+        const existingAddress = userData.customerDetails.savedAddresses.id(address._id);
+
+        if (existingAddress) {
+          // Update the fields of the existing address
+          Object.assign(existingAddress, address);
+        } else {
+          return res.status(400).json(makeJsonResponse('Failed', {}, { message: "Address with the provided _id not found", data: body }, 400, false));
+        }
       } else {
         userData.customerDetails.savedAddresses.push(address);
       }
-       
+
       const updatedUser = await userData.save();
 
       // Return success response
       return res.status(200).json(
-          makeJsonResponse(
-            address._id ? 'Address updated successfully' : 'Address added successfully',
-              {
-                savedAddresses: updatedUser.customerDetails.savedAddresses,
-                userId: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email
-              },
-              {},
-              200,
-              true
-          )
+        makeJsonResponse(
+          address._id ? 'Address updated successfully' : 'Address added successfully',
+          {
+            savedAddresses: updatedUser.customerDetails.savedAddresses,
+            userId: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email
+          },
+          {},
+          200,
+          true
+        )
       );
     } catch (error) {
       console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
