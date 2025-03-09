@@ -414,6 +414,49 @@ class customerController {
     }
   }
 
+  static async CustomeraddressDelete(req, res, next) {
+    const { body } = req;
+    const { user } = req;
+    try {
+      const addressId = body.addressId;
+      const userData = await userModel.findById(user._id);
+
+      if (!userData) {
+        return res.status(400).json(makeJsonResponse('Failed', {}, { message: "User not found", data: body }, 400, false));
+      }
+
+      const addressIndex = userData.customerDetails.savedAddresses.findIndex(addr => addr._id.toString() === addressId);
+
+      if (addressIndex === -1) {
+        return res.status(400).json(makeJsonResponse('Failed', {}, { message: "Address not found", data: body }, 400, false));
+      }
+
+      userData.customerDetails.savedAddresses.splice(addressIndex, 1);
+
+      const updatedUser = await userData.save();
+
+      return res.status(200).json(
+        makeJsonResponse(
+          'Address deleted successfully',
+          {
+        savedAddresses: updatedUser.customerDetails.savedAddresses,
+        userId: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email
+          },
+          {},
+          200,
+          true
+        )
+      );
+      
+    } catch (error) {
+      console.error(`Error adding customer address: ${error.code || ''} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false)
+      );
+    }
+  }
 
 
   static async updateBankDetails(req, res, next) {

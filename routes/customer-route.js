@@ -6,6 +6,7 @@ const {customerAdressUpdateValidator} = require("../middleware/validator/custome
 const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer");
 const {getRestaurantDetailsValidator} = require("../middleware/validator/customer/get-restaurant-detail-validator");
 const forgotPasswordValidator = require("../middleware/validator/forgot-password-validator");
+const {customerAdressDeleteValidator} = require("../middleware/validator/customer/customer-address-delete-validator");
 
 // router.get(
 //     "/all",
@@ -61,6 +62,13 @@ router.post(
     auth.decodeToken,
     customerAdressUpdateValidator,
     controller.CustomeraddressAdd
+)
+
+router.delete(
+    "/address",
+    auth.decodeToken,
+    customerAdressDeleteValidator,
+    controller.CustomeraddressDelete
 )
 
 router.post(

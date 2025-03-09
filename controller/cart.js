@@ -63,7 +63,7 @@ class CartClass {
       
       const updateCartData = await updateCart(cartId, foodId, qty, user);
     
-      return res.status(200).json(makeJsonResponse('Success', { message: "item updated in cart", data: updateCartData }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse(updateCartData.message, { ...updateCartData.data._doc }, {}, 200, true));
     } catch (error) {
       console.log(error)
       console.error(`Error foods:123 ${error.code} - ${error.message}`);
