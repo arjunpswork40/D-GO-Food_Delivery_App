@@ -5,8 +5,11 @@ const auth = require("../middleware/auth-middleware");
 const {customerAdressUpdateValidator} = require("../middleware/validator/customer/customer-address-update-validator");
 const {BankdetailsValidationRules} = require("../middleware/validator/customer/coustomer-bankdetails-update-validatrer");
 const {getRestaurantDetailsValidator} = require("../middleware/validator/customer/get-restaurant-detail-validator");
-const forgotPasswordValidator = require("../middleware/validator/forgot-password-validator");
+const changePasswordValidator = require("../middleware/validator/change-password-validator");
 const {customerAdressDeleteValidator} = require("../middleware/validator/customer/customer-address-delete-validator");
+const {forgotPasswordValidator} = require("../middleware/validator/forgot-password-validator");
+const {resetPasswordValidator} = require("../middleware/validator/reset-password-validator");
+
 
 // router.get(
 //     "/all",
@@ -72,10 +75,10 @@ router.delete(
 )
 
 router.post(
-    "/forgot-password",
+    "/change-password",
     auth.decodeToken,
-    forgotPasswordValidator,
-    controller.forgotPassword
+    changePasswordValidator,
+    controller.changePassword
 )
 
 router.post(
@@ -83,6 +86,18 @@ router.post(
     auth.decodeToken,
     BankdetailsValidationRules,
     controller.updateBankDetails
+)
+
+router.post(
+    "/forgot-password",
+    forgotPasswordValidator,
+    controller.forgotPassword
+)
+
+router.post(
+    "/reset-password",
+    resetPasswordValidator,
+    controller.resetPassword
 )
 
 

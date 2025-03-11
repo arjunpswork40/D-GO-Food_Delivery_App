@@ -10,6 +10,8 @@ const { hotelDetailsValidator } = require("../middleware/validator/owner-hotel-d
 const { addFoodByOwner } = require("../middleware/validator/food/add-food-by-owner");
 const { removeFoodItemByOwnerValidator } = require("../middleware/validator/food/remove-food-by-owner");
 const { updateFoodItemByOwnerValidator } = require("../middleware/validator/food/update-food-item-by-owner");
+const {forgotPasswordValidator} = require("../middleware/validator/forgot-password-validator");
+const {resetPasswordValidator} = require("../middleware/validator/reset-password-validator");
 
 const multer = require("multer");
 const fs = require("fs");
@@ -134,10 +136,23 @@ router.post(
   controller.addFoodByOwner
 );
 router.post(
-  "/forgot-password",
+  "/change-password",
   auth.decodeToken,
-  controller.forgotPassword
+  controller.changePassword
 );
+
+router.post(
+  "/forgot-password",
+  forgotPasswordValidator,
+  controller.forgotPassword
+)
+
+router.post(
+  "/reset-password",
+  resetPasswordValidator,
+  controller.resetPassword
+)
+
 router.get(
   "/home",
   auth.decodeToken,

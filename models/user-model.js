@@ -207,6 +207,8 @@ const userSchema = new Schema(
              default: "customer"
         },
         profile_image: { type: String, required: false },
+        forgot_password_otp: { type: Number, required: false },
+        otpExpires: { type: Date, default: null }
     },
     
     {

@@ -314,6 +314,12 @@ class controller {
             phone,
             locationCoordinatesLat,
             locationCoordinatesLng,
+            label,
+            street,
+            zipCode,
+            city,
+            state,
+            country
         } = req.body
 
         // const hotelImages = req.files?.hotelImages?.length > 0
@@ -354,6 +360,13 @@ class controller {
                                 parseFloat(locationCoordinatesLng),
                                 parseFloat(locationCoordinatesLat),
                             ],
+                            zipCode: zipCode,
+                            street: street,
+                            label: label,
+                            city: city,
+                            state: state,
+                            country: country,
+                            primaryAddress: true,
                         },
                     ],
                 }

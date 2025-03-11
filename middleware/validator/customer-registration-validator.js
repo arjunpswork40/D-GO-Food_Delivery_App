@@ -3,8 +3,8 @@ const {makeJsonResponse} = require("../../utils/response")
 const customerRegistrationValidator = [
     // Customer Details Validation
     body('name')
-        .notEmpty().withMessage('Owner name is required.')
-        .isLength({ min: 3 }).withMessage('Owner name must be at least 3 characters long.'),
+        .notEmpty().withMessage('Customer name is required.')
+        .isLength({ min: 3 }).withMessage('Customer name must be at least 3 characters long.'),
     body('email')
         .notEmpty().withMessage('Email is required.')
         .isEmail().withMessage('Invalid email format.'),
@@ -17,6 +17,19 @@ const customerRegistrationValidator = [
 
     // Customer Details Validation
     
+    body('label')
+        .notEmpty().withMessage('Address label is required (eg: Home, Work).')
+        .isLength({ min: 3 }).withMessage('Name must be at least 3 characters long.'),
+    body('street')
+        .notEmpty().withMessage('Address is required.'),
+    body('city')
+        .notEmpty().withMessage('City is required.'),
+    body('state')
+        .notEmpty().withMessage('State is required.'),
+    body('country')
+        .notEmpty().withMessage('Country is required.'),
+    body('zipCode')
+        .notEmpty().withMessage('ZipCode is required.'),
     body('locationCoordinatesLat')
         .notEmpty().withMessage('Latitude is required.')
         .isFloat({ min: -90, max: 90 }).withMessage('Latitude must be between -90 and 90.'),

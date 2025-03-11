@@ -29,8 +29,22 @@ const {
   getMainCategory
 } = require("./services/admin/admin-related-services");
 const userModel = require("../models/user-model");
+const nodemailer = require("nodemailer");
+
 
 const { USER_TYPES } = require("../constants/user/user-constants");
+
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+  }
+});
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 class customerController {
 
   static async allFoods(req, res, next) {
@@ -306,7 +320,7 @@ class customerController {
     }
   }
 
-  static async forgotPassword(req, res, next) { 
+  static async changePassword(req, res, next) { 
     const { 
       currentPassword,
       newPassword,
@@ -341,6 +355,66 @@ class customerController {
       console.log(error)
       console.error(`Error foods:4 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('Internal Error4', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async forgotPassword(req, res, next) {
+    const { email } = req.body;
+
+    try {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(404).json(makeJsonResponse('User not found',  { email }, {}, 404, false));
+      }
+  
+      const otp = generateOTP();
+      const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
+  
+      await User.updateOne({ email }, { forgot_password_otp:otp, otpExpires });
+  
+      const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Password Reset OTP",
+          text: `Your OTP for password reset is ${otp}. It will expire in 10 minutes.`
+      };
+  
+      transporter.sendMail(mailOptions, (err, info) => {
+        console.log(err)
+          if (err) return res.status(500).json({ message: "Error sending email" });
+          return res.status(200).json(makeJsonResponse('Password Reset OTP send successfuly',  { email }, {}, 200, true));
+      });
+  
+  
+    }
+    catch (error) { 
+      console.error(`Error foods:5 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error5', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async resetPassword(req, res, next) {
+    const { email, otp, newPassword } = req.body;
+    try {
+      const user = await User.findOne({ email });
+      console.log(user.otp !== otp );
+
+      if (!user || user.forgot_password_otp !== Number(otp) || new Date() > user.otpExpires) {
+          return res.status(401).json(makeJsonResponse('Invalid or expired OTP',  { email,otp }, {}, 401, false));
+          
+      }
+  
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await User.updateOne({ email }, { password: hashedPassword, otp: null, otpExpires: null });
+  
+      return res.status(200).json(makeJsonResponse('Password updated successfully',  { email,otp }, {}, 200, true));
+  
+  
+    }
+    catch (error) { 
+      console.error(`Error foods:5 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error5', {}, { message: error.message || "Internal error occurred" }, 500, false));
     }
   }
 
