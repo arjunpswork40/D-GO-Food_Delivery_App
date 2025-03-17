@@ -9,13 +9,18 @@ const changePasswordValidator = require("../middleware/validator/change-password
 const {customerAdressDeleteValidator} = require("../middleware/validator/customer/customer-address-delete-validator");
 const {forgotPasswordValidator} = require("../middleware/validator/forgot-password-validator");
 const {resetPasswordValidator} = require("../middleware/validator/reset-password-validator");
-
+const {addOrRemoveFavoriteListValidator} = require("../middleware/validator/customer/favorite/add-or-remove-favorite-list");
 
 // router.get(
 //     "/all",
 //     auth.decodeToken,
 //     controller.allFoods
 // )
+router.get(
+    "/favorites-list/:page/:limit",
+    auth.decodeToken,
+    controller.getFavoriteList
+)
 
 router.get(
     "/home/:page/:limit",
@@ -52,12 +57,6 @@ router.get(
     "/account/:page/:limit",
     auth.decodeToken,
     controller.accountDetails
-)
-
-router.get(
-    "/:id",
-    auth.decodeToken,
-    controller.customerprofile
 )
 
 router.post(
@@ -100,6 +99,18 @@ router.post(
     controller.resetPassword
 )
 
+router.post(
+    "/add-or-remove-from-favorite-list",
+    auth.decodeToken,
+    addOrRemoveFavoriteListValidator,
+    controller.addOrRemoveFromFavoriteList
+)
+
+router.get(
+    "/:id([0-9a-fA-F]{24})",
+    auth.decodeToken,
+    controller.customerprofile
+)
 
 
 module.exports = router

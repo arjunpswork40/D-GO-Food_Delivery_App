@@ -131,76 +131,82 @@ class CartClass {
     try {
       const user = req.user
       const cartResult = await Cart.aggregate([
+          // Match the userId with the logged-in user's ID
+          {
+          $match: {
+            userId: mongoose.Types.ObjectId(user._id)
+            }
+          },
           // Lookup restaurant (User) details using restaurantId
           {
-              $lookup: {
-                  from: "users",
-                  localField: "restaurantId",
-                  foreignField: "_id",
-                  as: "restaurantDetails"
-              }
+          $lookup: {
+          from: "users",
+          localField: "restaurantId",
+          foreignField: "_id",
+          as: "restaurantDetails"
+          }
           },
           { $unwind: "$restaurantDetails" }, // Expand restaurant details
           
           // Lookup all Food documents where any foodItem in the cart exists
           {
-              $lookup: {
-                  from: "foods", // Food collection
-                  localField: "foodItems.foodId",
-                  foreignField: "foodItems._id",
-                  as: "foodDetails"
-              }
+          $lookup: {
+          from: "foods", // Food collection
+          localField: "foodItems.foodId",
+          foreignField: "foodItems._id",
+          as: "foodDetails"
+          }
           },
 
           // Map and restructure foodItems with matched food details
           {
-              $addFields: {
-                  foodItems: {
-                      $map: {
-                          input: "$foodItems",
-                          as: "cartItem",
-                          in: {
-                              _id: "$$cartItem._id",
-                              foodId: "$$cartItem.foodId",
-                              qty: "$$cartItem.qty",
-                              price: "$$cartItem.price",
-                              foodDetails: {
-                                  $arrayElemAt: [
-                                      {
-                                          $filter: {
-                                              input: {
-                                                  $reduce: {
-                                                      input: "$foodDetails",
-                                                      initialValue: [],
-                                                      in: { $concatArrays: ["$$value", "$$this.foodItems"] }
-                                                  }
-                                              },
-                                              as: "foodItem",
-                                              cond: { $eq: ["$$foodItem._id", "$$cartItem.foodId"] }
-                                          }
-                                      },
-                                      0
-                                  ]
-                              }
-                          }
+          $addFields: {
+          foodItems: {
+              $map: {
+              input: "$foodItems",
+              as: "cartItem",
+              in: {
+              _id: "$$cartItem._id",
+              foodId: "$$cartItem.foodId",
+              qty: "$$cartItem.qty",
+              price: "$$cartItem.price",
+              foodDetails: {
+                  $arrayElemAt: [
+                  {
+                  $filter: {
+                      input: {
+                      $reduce: {
+                      input: "$foodDetails",
+                      initialValue: [],
+                      in: { $concatArrays: ["$$value", "$$this.foodItems"] }
                       }
+                      },
+                      as: "foodItem",
+                      cond: { $eq: ["$$foodItem._id", "$$cartItem.foodId"] }
                   }
+                  },
+                  0
+                  ]
               }
+              }
+              }
+          }
+          }
           },
 
           // Final projection to include restaurant and structured food details
           {
-              $project: {
-                  "userId": 1,
-                  "restaurantId": 1,
-                  "restaurantDetails.name": 1,
-                  "restaurantDetails.email": 1,
-                  "restaurantDetails.phone": 1,
-                  "foodItems": 1,
-                  "totalPrice": 1,
-                  "createdAt": 1,
-                  "updatedAt": 1
-              }
+          $project: {
+          "userId": 1,
+          "restaurantId": 1,
+          "restaurantDetails.name": 1,
+          "restaurantDetails.email": 1,
+          "restaurantDetails.phone": 1,
+          "foodItems": 1,
+          "totalPrice": 1,
+          "createdAt": 1,
+          "updatedAt": 1
+          }
           }
       ]);
 

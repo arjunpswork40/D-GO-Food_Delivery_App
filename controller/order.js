@@ -115,6 +115,12 @@ class order {
         for (let item of ordersWithFoodDetails) {
             let finalResult = {
                 _id: item._id,
+                user: {
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    userId: user._id
+                },
                 cartId: item.cartId,
                 customerId: item.customerId,
                 restaurantId: item.restaurantId,

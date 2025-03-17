@@ -418,6 +418,102 @@ class customerController {
     }
   }
 
+  static async addOrRemoveFromFavoriteList(req, res, next) {
+    const user = req.user;
+    const { restaurantId } = req.body;
+
+    if (user.role !== USER_TYPES.CUSTOMER) {
+      return res.status(403).json(makeJsonResponse('Forbidden', {}, { message: 'User is not authorized to perform this action' }, 403, false));
+    }
+
+    const restaurantOwner = await User.findById(restaurantId);
+    
+    if (!restaurantOwner || restaurantOwner.role !== USER_TYPES.OWNER) {
+      return res.status(403).json(makeJsonResponse('Forbidden', {}, { message: 'User is not authorized to perform this action' }, 403, false));
+    }
+    try {
+      const userData = await User.findById(user._id);
+
+      if (!userData) {
+          return res.status(401).json(makeJsonResponse('User not found',  { email,otp }, {}, 401, false));
+      }
+      
+      const { restaurantId } = req.body;
+
+      if (!restaurantId) {
+        return res.status(400).json(makeJsonResponse('Restaurant ID is required', {}, {}, 400, false));
+      }
+
+      const favoriteRestaurants = userData.customerDetails.favoriteRestaurants || [];
+      const restaurantIndex = favoriteRestaurants.indexOf(restaurantId);
+
+      if (restaurantIndex > -1) {
+        // If restaurantId exists, remove it
+        favoriteRestaurants.splice(restaurantIndex, 1);
+      } else {
+        // If restaurantId does not exist, add it
+        favoriteRestaurants.push(restaurantId);
+      }
+
+      userData.customerDetails.favoriteRestaurants = favoriteRestaurants;
+      await userData.save();
+
+      return res.status(200).json(makeJsonResponse('Favorite list updated successfully', { favoriteRestaurants }, {}, 200, true));
+
+    }
+    catch (error) { 
+      console.error(`Error foods:5 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error5', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+  }
+
+  static async getFavoriteList(req, res, next) {
+    const user = req.user;
+
+    if (user.role !== USER_TYPES.CUSTOMER) {
+      return res.status(403).json(makeJsonResponse('Forbidden', {}, { message: 'User is not authorized to perform this action' }, 403, false));
+    }
+
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    try {
+      const userData = await User.findById(user._id).populate({
+          path: 'customerDetails.favoriteRestaurants',
+          options: {
+            skip: parseInt(skip),
+            limit: parseInt(limit)
+          }
+      });
+
+      if (!userData) {
+      return res.status(404).json(makeJsonResponse('User not found', {}, {}, 404, false));
+      }
+
+      const favoriteRestaurants = userData.customerDetails.favoriteRestaurants;
+
+      const totalFavorites = await User.countDocuments({
+        _id: { $in: user.customerDetails.favoriteRestaurants }
+        });
+
+      const totalPages = Math.ceil(totalFavorites / limit);
+
+      return res.status(200).json(makeJsonResponse('Favorite list fetched successfully', {
+      favoriteRestaurants,
+      pagination: {
+        currentPage: page,
+        limit,
+        totalItems: totalFavorites,
+        totalPages
+      }
+      }, {}, 200, true));
+    } catch (error) {
+      console.error(`Error fetching favorite list: ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('Internal Error', {}, { message: error.message || "Internal error occurred" }, 500, false));
+    }
+
+  }
+
   static async CustomeraddressAdd(req, res, next) {
     const { body } = req;
     const { user } = req;

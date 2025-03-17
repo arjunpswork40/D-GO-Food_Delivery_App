@@ -169,7 +169,7 @@ const userSchema = new Schema(
             earnings: { type: Number, default: 0 },
           },
         customerDetails: {
-            favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // References to Owner Users
+            favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }], // References to Owner Users
             savedAddresses: [addressSchema],
             orders: [
               {
