@@ -3,8 +3,22 @@ const {USER_TYPES} = require("../constants/user/user-constants")
 const User = require("../models/user-model")
 const bcrypt = require("bcrypt");
 const { BCRYPT_SALT } = require("../config/index")
+const nodemailer = require("nodemailer");
+
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+  }
+});
+
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 class deliveryPartner {
+
       static async changePassword(req, res, next) { 
         const { 
           currentPassword,

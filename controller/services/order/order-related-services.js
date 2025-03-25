@@ -110,13 +110,14 @@ module.exports = {
 
                 // find the closet first delivery partner.
 
-                const restaurantLocation = await User.findById(updatedData.restaurantId).select("hotelDetails.location hotelDetails.name");
+                const restaurantLocation = await User.findById(userId).select("hotelDetails.location hotelDetails.coordinates hotelDetails.name");
+                console.log("restaurantLocation===>",restaurantLocation)
 
-
-                const nearByLimit = process.env.NEAR_BY_MAX_DISTANCE || 5000;
-                const longitude = restaurantLocation.hotelDetails.location.lng;
-                const latitude = restaurantLocation.hotelDetails.location.lat;
-
+                const nearByLimit = process.env.NEAR_BY_MAX_DISTANCE || 50000;
+                const longitude = restaurantLocation.hotelDetails.location.lng || restaurantLocation.hotelDetails.location.coordinates[0];
+                const latitude = restaurantLocation.hotelDetails.location.lat || restaurantLocation.hotelDetails.location.coordinates[1];
+                console.log("longitude===>",longitude);
+                console.log("latitude===>",latitude);
                 const nearbyDeliveryPartners = await User.findOne({
                     role: USER_TYPES.DELIVERY_PARTNER,
                     "deliveryPartnerDetails.currentLocation.coordinates": {

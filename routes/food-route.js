@@ -17,10 +17,10 @@ router.get(
     controller.foodDetail
 )
 
-router.get(
-    "/:id",
-    auth.decodeToken,
-    controller.aFoodDetails
-)
+// router.get(
+//     "/:id",
+//     auth.decodeToken,
+//     controller.aFoodDetails
+// )
 
 module.exports = router
