@@ -105,6 +105,17 @@ router.post(
     addOrRemoveFavoriteListValidator,
     controller.addOrRemoveFromFavoriteList
 )
+router.get(
+    "/offers/:page/:limit",
+    auth.decodeToken,
+    controller.getOffers
+)
+
+router.get(
+    "/offer/:offerId",
+    auth.decodeToken,
+    controller.getOfferById
+)
 
 router.get(
     "/:id([0-9a-fA-F]{24})",

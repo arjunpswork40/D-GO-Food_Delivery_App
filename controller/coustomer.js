@@ -2,6 +2,7 @@ const applicationStaticModel = require("../models/application-static-model");
 const Food = require("../models/food-model");
 const serviceCategoryModel = require("../models/serviceCategory-model");
 const User = require("../models/user-model")
+const OfferModel = require("../models/offer")
 const { makeJsonResponse } = require("../utils/response");
 const mongoose = require("mongoose");
 const { BCRYPT_SALT } = require("../config/index");
@@ -112,21 +113,26 @@ class customerController {
 
       let highlightedRestaurants = await getHighlightedHotels(page, limit);
       let restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
-
-      restaurantList = restaurantList.map(item =>  ({
+      let favoriteRestaurantIds = await User.findById(user._id, "customerDetails.favoriteRestaurants").lean();
+      favoriteRestaurantIds = favoriteRestaurantIds.customerDetails.favoriteRestaurants || [];
+      console.log(favoriteRestaurantIds)
+      restaurantList = restaurantList.map(item => ({
           _id: item._id,
           image: item.hotelDetails.images.hotelMainImage[0],
           name: item.hotelDetails.name,
           description: item.hotelDetails.description,
           ratings: item.ratings.averageRating,
-          orderCount: item.orderCount
-      }))
+          orderCount: item.orderCount,
+          isFavorite: favoriteRestaurantIds.map(id => id.toString()).includes(item._id.toString()) // Add isFavorite flag
+      }));
 
       highlightedRestaurants = highlightedRestaurants.map(item => ({
           _id: item._id,
           image: item.hotelDetails.images.hotelMainImage[0],
           name: item.hotelDetails.name,
           description: item.hotelDetails.description,
+          isFavorite: favoriteRestaurantIds.map(id => id.toString()).includes(item._id.toString()) // Add isFavorite flag
+
       }))
 
       const finalResult = {
@@ -418,6 +424,102 @@ class customerController {
     }
   }
 
+  static async getOffers(req, res, next) {
+    try {
+      const { page = 1, limit = 10 } = req.params;
+      const skip = (page - 1) * limit;
+
+      const offers = await OfferModel.find()
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate({
+          path: 'ownerId',
+          select: 'name email phone hotelDetails', // Specify the fields to fetch from the user model
+        })
+        .lean();
+
+      // Rename ownerId to restaurantDetails in the resulting offers
+      offers.forEach(offer => {
+        if (offer.ownerId) {
+          offer.restaurantDetails = offer.ownerId;
+          delete offer.ownerId;
+        }
+      });
+
+      const totalOffers = await OfferModel.countDocuments();
+
+      const totalPages = Math.ceil(totalOffers / limit);
+
+      return res.status(200).json(
+        makeJsonResponse(
+          'Offers fetched successfully',
+          {
+            offers,
+            pagination: {
+              currentPage: page,
+              limit,
+              totalItems: totalOffers,
+              totalPages,
+            },
+          },
+          {},
+          200,
+          true
+        )
+      );
+    } catch (error) {
+      console.error(`Error fetching offers: ${error.code || ''} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error', {}, { message: error.message || 'Internal error occurred' }, 500, false)
+      );
+    }
+  }
+
+  static async getOfferById(req, res, next) {
+    try {
+      const { offerId } = req.params;
+
+      if (!mongoose.Types.ObjectId.isValid(offerId)) {
+        return res.status(400).json(
+          makeJsonResponse('Invalid Offer ID', {}, { message: 'The provided offer ID is not valid' }, 400, false)
+        );
+      }
+
+      const offer = await OfferModel.findById(offerId)
+        .populate({
+          path: 'ownerId',
+          select: 'name email phone hotelDetails', // Specify the fields to fetch from the user model
+        })
+        .lean();
+
+      if (!offer) {
+        return res.status(404).json(
+          makeJsonResponse('Offer not found', {}, { message: 'No offer found with the provided ID' }, 404, false)
+        );
+      }
+
+      // Rename ownerId to restaurantDetails in the resulting offer
+      if (offer.ownerId) {
+        offer.restaurantDetails = offer.ownerId;
+        delete offer.ownerId;
+      }
+
+      return res.status(200).json(
+        makeJsonResponse(
+          'Offer fetched successfully',
+          { offer },
+          {},
+          200,
+          true
+        )
+      );
+    } catch (error) {
+      console.error(`Error fetching offer by ID: ${error.code || ''} - ${error.message}`);
+      return res.status(500).json(
+        makeJsonResponse('Internal Error', {}, { message: error.message || 'Internal error occurred' }, 500, false)
+      );
+    }
+  }
   static async addOrRemoveFromFavoriteList(req, res, next) {
     const user = req.user;
     const { restaurantId } = req.body;
@@ -458,7 +560,12 @@ class customerController {
       userData.customerDetails.favoriteRestaurants = favoriteRestaurants;
       await userData.save();
 
-      return res.status(200).json(makeJsonResponse('Favorite list updated successfully', { favoriteRestaurants }, {}, 200, true));
+      const favoriteRestaurantsDetails = await User.find(
+        { _id: { $in: favoriteRestaurants } },
+        { name: 1, email: 1, phone: 1, hotelDetails: 1 } // Specify the fields you want to retrieve
+      ).lean();
+
+      return res.status(200).json(makeJsonResponse('Favorite list updated successfully', { favoriteRestaurantsDetails }, {}, 200, true));
 
     }
     catch (error) { 
@@ -480,9 +587,10 @@ class customerController {
     try {
       const userData = await User.findById(user._id).populate({
           path: 'customerDetails.favoriteRestaurants',
+          select: 'name email phone hotelDetails', // Specify the fields to fetch
           options: {
-            skip: parseInt(skip),
-            limit: parseInt(limit)
+        skip: parseInt(skip),
+        limit: parseInt(limit)
           }
       });
 
