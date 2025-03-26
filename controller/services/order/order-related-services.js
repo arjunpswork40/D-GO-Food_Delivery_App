@@ -103,7 +103,6 @@ module.exports = {
                     runValidators: true
                 }
             )
-            console.log("restaurantLocation===>",orderId)
 
             if(updatedData) {
                 // send notification
@@ -111,13 +110,11 @@ module.exports = {
                 // find the closet first delivery partner.
 
                 const restaurantLocation = await User.findById(userId).select("hotelDetails.location hotelDetails.coordinates hotelDetails.name");
-                console.log("restaurantLocation===>",restaurantLocation)
 
                 const nearByLimit = process.env.NEAR_BY_MAX_DISTANCE || 50000;
                 const longitude = restaurantLocation.hotelDetails.location.lng || restaurantLocation.hotelDetails.location.coordinates[0];
                 const latitude = restaurantLocation.hotelDetails.location.lat || restaurantLocation.hotelDetails.location.coordinates[1];
-                console.log("longitude===>",longitude);
-                console.log("latitude===>",latitude);
+
                 const nearbyDeliveryPartners = await User.findOne({
                     role: USER_TYPES.DELIVERY_PARTNER,
                     "deliveryPartnerDetails.currentLocation.coordinates": {
@@ -146,9 +143,26 @@ module.exports = {
                     runValidators: true
                 })
 
+                const nearbyDeliveryPartnersData = {
+                    userId: nearbyDeliveryPartners._id,
+                    name: nearbyDeliveryPartners.name,
+                    phone: nearbyDeliveryPartners.phone,    
+                };
+
                 finalResponseFormat.status = true;
                 finalResponseFormat.message = "oreder status updated";
-                finalResponseFormat.data = updatedData;
+                finalResponseFormat.data = {
+                    items: updatedData.items,
+                    totalAmount: updatedData.totalAmount,
+                    address: updatedData.address,
+                    phone: updatedData.phone,
+                    orderDate: updatedData.orderDate,
+                    restaurantId: updatedData.restaurantId,
+                    status: updatedData.status,
+                    cartId: updatedData.cartId,
+                    deliveryPartner: nearbyDeliveryPartnersData,
+                    paidThrough: updatedData.paidThrough,
+                };
                 return finalResponseFormat;
             } else {
                 finalResponseFormat.message = "oreder with given ID is not found";

@@ -378,7 +378,7 @@ class order {
 
             const statusUpdate = await prepareOrderStatusUpdate(orderId, user._id);
             if(statusUpdate.status) {
-                return res.status(200).json(makeJsonResponse('Order status updated', { statusUpdate }, {}, 200, true));
+                return res.status(200).json(makeJsonResponse('Order status updated', { ...statusUpdate.data }, {}, 200, true));
             } else {
                 return res.status(500).json(makeJsonResponse(statusUpdate.message, {}, {}, 500, false));
             }
