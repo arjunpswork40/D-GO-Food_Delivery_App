@@ -65,9 +65,45 @@ router.get(
 )
 
 router.get(
+    "/delivery-partner/list/completed/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerCompletedOrders
+)
+
+router.get(
+    "/delivery-partner/list/cancelled/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerCancelledOrders
+)
+
+router.get(
+    "/delivery-partner/list/rejected/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerRejectedOrders
+)
+
+router.get(
+    "/delivery-partner/list/accepted/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerAcceptedOrders
+)
+
+router.get(
     "/customer/list/:page/:limit",
     auth.decodeToken,
     controller.orderHistroy
+)
+
+router.get(
+    "/customer/list/completed/:page/:limit",
+    auth.decodeToken,
+    controller.customerCompletedOrders
+)
+
+router.get(
+    "/customer/list/cancelled/:page/:limit",
+    auth.decodeToken,
+    controller.customerCancelledOrders
 )
 
 router.get(

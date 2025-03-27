@@ -8,6 +8,19 @@ const { BCRYPT_SALT } = require("../config/index");
 const foodModel = require("../models/food-model");
 const { getHomeDetailsWithOrderData } = require("./services/owner/home-details-service");
 const { getAllFoodList,getAvailableAllFoodList,getUnAvailableAllFoodList,removeFoodItemByOwnerAction } = require("./services/food/food-service");
+const nodemailer = require("nodemailer");
+
+
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+  }
+});
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 class Owner {
 
     // static async userProfile(req, res, next) {

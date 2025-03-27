@@ -85,8 +85,20 @@ class order {
             .limit(limit)
             .lean(); // Convert to plain objects for better performance
 
+            const totalOrders = await Order.countDocuments({ customerId: user._id });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+
         if (!orders.length) {
-            return res.status(200).json(makeJsonResponse('No orders found', { orders: [] }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('No orders found', { orders: [], pagination: paginationObject }, {}, 200, true));
         }
         
         // Extract all foodIds from order items
@@ -160,7 +172,231 @@ class order {
             lastEntry.push(finalResult);
         }
 
-        return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orders: lastEntry }, {}, 200, true));
+        return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orders: lastEntry, pagination: paginationObject }, {}, 200, true));
+
+    }
+
+    static async customerCompletedOrders(req, res, next) {
+        try {
+            const user = req.user
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.CUSTOMER) {    
+                return res.status(409).json(makeJsonResponse('Customer can only view order history', {}, {}, 409, false));
+            }
+            const orders = await Order.find({ customerId: user._id, status : ORDER_STATUS.OTP_VERIFIED_AND_COMPLETED_THE_ORDER })
+                .sort({ orderDate: -1 }) // Sort by order date in descending order
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ customerId: user._id, status: ORDER_STATUS.OTP_VERIFIED_AND_COMPLETED_THE_ORDER });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orders.length) {
+                return res.status(200).json(makeJsonResponse('No orders found', { orders: [], pagination: paginationObject }, {}, 200, true));
+            }
+            
+            // Extract all foodIds from order items
+            const foodIds = orders.flatMap(order => order.items.map(item => item.foodId));
+        
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+
+            // Map food details back to orders
+            const ordersWithFoodDetails = orders.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    user: {
+                        name: user.name,
+                        email: user.email,
+                        phone: user.phone,
+                        userId: user._id
+                    },
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+            
+            
+
+            return res.status(200).json(makeJsonResponse('Completed Order list fetched successfully', { orders: lastEntry, pagination: paginationObject, }, {}, 200, true));
+        } catch (error) {
+            console.log("error from controller customerCompletedOrders function => ",error)
+            return res.status(500).json(makeJsonResponse('Completed Order list fetch Failed', {}, {error: error.message || "Internal error occurred"}, 500, false));
+        }
+
+    }
+
+    static async customerCancelledOrders(req, res, next) {
+        try {
+            const user = req.user
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.CUSTOMER) {    
+                return res.status(409).json(makeJsonResponse('Customer can only view this data', {}, {}, 409, false));
+            }
+            const orders = await Order.find({ customerId: user._id, status : ORDER_STATUS.ORDER_CANCELLED })
+                .sort({ orderDate: -1 }) // Sort by order date in descending order
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ customerId: user._id, status: ORDER_STATUS.ORDER_CANCELLED });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject = {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orders.length) {
+                return res.status(200).json(makeJsonResponse('No orders found', { orders: [], pagination: paginationObject }, {}, 200, true));
+            }
+            
+            // Extract all foodIds from order items
+            const foodIds = orders.flatMap(order => order.items.map(item => item.foodId));
+        
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+
+            // Map food details back to orders
+            const ordersWithFoodDetails = orders.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    user: {
+                        name: user.name,
+                        email: user.email,
+                        phone: user.phone,
+                        userId: user._id
+                    },
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+            
+            
+
+            return res.status(200).json(makeJsonResponse('Cancelled Order list fetched successfully', { orders: lastEntry, pagination: paginationObject, }, {}, 200, true));
+        } catch (error) {
+            console.log("error from controller customer Cancelled Orders function => ",error)
+            return res.status(500).json(makeJsonResponse('Cancelled Order list fetch Failed', {}, {error: error.message || "Internal error occurred"}, 500, false));
+        }
 
     }
 
@@ -179,8 +415,19 @@ class order {
             .limit(limit)
             .lean(); // Convert to plain objects for better performance
 
+            const totalOrders = await Order.countDocuments({ restaurantId: user._id });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
         if (!orders.length) {
-            return res.status(200).json(makeJsonResponse('No orders found', { orders: [] }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('No orders found', { orders: [], pagination: paginationObject }, {}, 200, true));
         }
         
         // Extract all foodIds from order items
@@ -248,7 +495,7 @@ class order {
             lastEntry.push(finalResult);
         }
 
-        return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orders: lastEntry }, {}, 200, true));
+        return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orders: lastEntry, pagination: paginationObject }, {}, 200, true));
 
     }
 
@@ -270,8 +517,19 @@ class order {
                 .limit(limit)
                 .lean(); // Convert to plain objects for better performance
 
-                if (!orderList.length) {
-                return res.status(200).json(makeJsonResponse('No orders found', { orderList: [] }, {}, 200, true));
+            const totalOrders = await Order.countDocuments({ deliveryPartnerId: user._id });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No orders found', { orderList: [], pagination: paginationObject }, {}, 200, true));
             }
     
             // Extract all foodIds from order items
@@ -339,14 +597,438 @@ class order {
                 lastEntry.push(finalResult);
             }
     
-            return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orderList: lastEntry }, {}, 200, true));
+            return res.status(200).json(makeJsonResponse('Order list fetched successfully', { orderList: lastEntry, pagination: paginationObject }, {}, 200, true));
     
         } catch (error) {
             console.log("Error from controller deliveryPartnerOrderList function => ", error);
             return res.status(500).json(makeJsonResponse('Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
         }
     }
+
+    static async deliveryPartnerCompletedOrders(req, res, next) {
+        const user = req.user;
+        
+        try {
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.DELIVERY_PARTNER) {    
+                return res.status(409).json(makeJsonResponse('Delivery partner can only view this data', {}, {}, 409, false));
+            }
+            // Fetch orders assigned to the delivery partner
+            const orderList = await Order.find({ deliveryPartnerId: user._id, status : ORDER_STATUS.OTP_VERIFIED_AND_COMPLETED_THE_ORDER })
+                .sort({ orderDate: -1 }) // Sort latest orders first
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ deliveryPartnerId: user._id, status : ORDER_STATUS.OTP_VERIFIED_AND_COMPLETED_THE_ORDER });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No completed orders found', { orderList: [], pagination: paginationObject }, {}, 200, true));
+            }
     
+            // Extract all foodIds from order items
+            const foodIds = orderList.flatMap(order => order.items.map(item => item.foodId));
+    
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+    
+            // Map food details back to orders
+            const ordersWithFoodDetails = orderList.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+    
+            return res.status(200).json(makeJsonResponse('Completed Order list fetched successfully', { orderList: lastEntry, pagination: paginationObject }, {}, 200, true));
+    
+        } catch (error) {
+            console.log("Error from controller deliveryPartnerCompletedOrders function => ", error);
+            return res.status(500).json(makeJsonResponse('Completed Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
+        }
+    }
+    
+
+    static async deliveryPartnerCancelledOrders(req, res, next) {
+        const user = req.user;
+        
+        try {
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.DELIVERY_PARTNER) {    
+                return res.status(409).json(makeJsonResponse('Delivery partner can only view this data', {}, {}, 409, false));
+            }
+            // Fetch orders assigned to the delivery partner
+            const orderList = await Order.find({ deliveryPartnerId: user._id, status : ORDER_STATUS.ORDER_CANCELLED })
+                .sort({ orderDate: -1 }) // Sort latest orders first
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ deliveryPartnerId: user._id, status : ORDER_STATUS.ORDER_CANCELLED });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No cancelled orders found', { orderList: [], pagination: paginationObject }, {}, 200, true));
+            }
+    
+            // Extract all foodIds from order items
+            const foodIds = orderList.flatMap(order => order.items.map(item => item.foodId));
+    
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+    
+            // Map food details back to orders
+            const ordersWithFoodDetails = orderList.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+    
+            return res.status(200).json(makeJsonResponse('Cancelled Order list fetched successfully', { orderList: lastEntry, pagination: paginationObject }, {}, 200, true));
+    
+        } catch (error) {
+            console.log("Error from controller deliveryPartnerCancelledOrders function => ", error);
+            return res.status(500).json(makeJsonResponse('Cancelled Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
+        }
+    }
+
+    static async deliveryPartnerRejectedOrders(req, res, next) {
+        const user = req.user;
+        
+        try {
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.DELIVERY_PARTNER) {    
+                return res.status(409).json(makeJsonResponse('Delivery partner can only view this data', {}, {}, 409, false));
+            }
+            // Fetch orders assigned to the delivery partner
+            const orderList = await Order.find({ deliveryPartnerId: user._id, status : ORDER_STATUS.DELIVERY_PARTNER_REJECTED_ORDER })
+                .sort({ orderDate: -1 }) // Sort latest orders first
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ deliveryPartnerId: user._id, status : ORDER_STATUS.DELIVERY_PARTNER_REJECTED_ORDER });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No rejected orders found', { orderList: [], pagination: paginationObject }, {}, 200, true));
+            }
+    
+            // Extract all foodIds from order items
+            const foodIds = orderList.flatMap(order => order.items.map(item => item.foodId));
+    
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+    
+            // Map food details back to orders
+            const ordersWithFoodDetails = orderList.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+    
+            return res.status(200).json(makeJsonResponse('Rejected Order list fetched successfully', { orderList: lastEntry, pagination: paginationObject }, {}, 200, true));
+    
+        } catch (error) {
+            console.log("Error from controller deliveryPartnerRejectedOrders function => ", error);
+            return res.status(500).json(makeJsonResponse('Rejected Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
+        }
+    }
+
+    static async deliveryPartnerAcceptedOrders(req, res, next) {
+        const user = req.user;
+        
+        try {
+            const page = parseInt(req.params.page) || 1;
+            const limit = parseInt(req.params.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            if(user.role != USER_TYPES.DELIVERY_PARTNER) {    
+                return res.status(409).json(makeJsonResponse('Delivery partner can only view this data', {}, {}, 409, false));
+            }
+            // Fetch orders assigned to the delivery partner
+            const orderList = await Order.find({ deliveryPartnerId: user._id, status : ORDER_STATUS.DELIVERY_PARTNER_ACCEPTED_ORDER })
+                .sort({ orderDate: -1 }) // Sort latest orders first
+                .skip(skip)
+                .limit(limit)
+                .lean(); // Convert to plain objects for better performance
+
+            const totalOrders = await Order.countDocuments({ deliveryPartnerId: user._id, status : ORDER_STATUS.DELIVERY_PARTNER_ACCEPTED_ORDER });
+        
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders,
+                totalPages,
+            }
+
+            if (!orderList.length) {
+                return res.status(200).json(makeJsonResponse('No accepted orders found', { orderList: [], pagination: paginationObject }, {}, 200, true));
+            }
+    
+            // Extract all foodIds from order items
+            const foodIds = orderList.flatMap(order => order.items.map(item => item.foodId));
+    
+
+            // Fetch food details from Food model
+            const foodDetails = await Food.find(
+                { "foodItems._id": { $in: foodIds } },
+                { "foodItems.$": 1, hotelId: 1 } // Retrieve only matching food items
+            ).lean();
+    
+            // Map food details back to orders
+            const ordersWithFoodDetails = orderList.map(order => ({
+                ...order,
+                items: order.items.map(item => ({
+                    ...item,
+                    foodDetails: foodDetails.find(food =>
+                        food.foodItems.some(fItem => fItem._id.equals(item.foodId))
+                    )?.foodItems.find(fItem => fItem._id.equals(item.foodId)) || null
+                }))
+            }));
+
+            let lastEntry = [];
+
+            for (let item of ordersWithFoodDetails) {
+                let finalResult = {
+                    _id: item._id,
+                    cartId: item.cartId,
+                    customerId: item.customerId,
+                    restaurantId: item.restaurantId,
+                    deliveryPartnerId: item.deliveryPartnerId,
+                    address: item.address,
+                    phone: item.phone,
+                    totalAmount: item.totalAmount,
+                    orderDate: item.orderDate,
+                    paidThrough: item.paidThrough,
+                    status: item.status,
+                    items: [] // Initialize array to store items
+                };
+            
+                for (let entry of item.items ?? []) {
+                    let foodDetailsEntryObject = {
+                        _id: entry._id,
+                        foodId: entry.foodId,
+                        qty: entry.qty,
+                        price: entry.price,
+                        foodDetails: [] // Initialize food details array
+                    };
+            
+                    if (entry.foodDetails) {
+                        let foodDetail = {
+                            image: entry.foodDetails.images?.[0] ?? '',
+                            foodId: entry.foodDetails._id,
+                            name: entry.foodDetails.name,
+                            description: entry.foodDetails.description,
+                            category: entry.foodDetails.category,
+                        };
+                        foodDetailsEntryObject.foodDetails.push(foodDetail);
+                    }
+            
+                    finalResult.items.push(foodDetailsEntryObject);
+                }
+            
+                lastEntry.push(finalResult);
+            }
+    
+            return res.status(200).json(makeJsonResponse('Accepted Order list fetched successfully', { orderList: lastEntry, pagination: paginationObject }, {}, 200, true));
+    
+        } catch (error) {
+            console.log("Error from controller deliveryPartnerAcceptedOrders function => ", error);
+            return res.status(500).json(makeJsonResponse('Accepted Order List Fetch Failed', {}, { error: error.message || "Internal error occurred" }, 500, false));
+        }
+    }
 
     static async prepareOrder(req, res, next) {
         try {
