@@ -58,18 +58,19 @@ class deliveryPartner {
       }
 
       static async forgotPassword(req, res, next) {
-          const { email } = req.body;
+          const { email, role } = req.body;
       
           try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email,role });
       
             if (!user) {
               return res.status(404).json(makeJsonResponse('User not found',  { email }, {}, 404, false));
             }
         
             const otp = generateOTP();
+            console.log(otp);
             const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
-        
+            console.log(otpExpires);
             await User.updateOne({ email }, { forgot_password_otp:otp, otpExpires });
         
             const mailOptions = {
@@ -94,9 +95,9 @@ class deliveryPartner {
         }
       
         static async resetPassword(req, res, next) {
-          const { email, otp, newPassword } = req.body;
+          const { email, otp, newPassword, role } = req.body;
           try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email, role });
             console.log(user.otp !== otp );
       
             if (!user || user.forgot_password_otp !== Number(otp) || new Date() > user.otpExpires) {

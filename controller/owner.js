@@ -323,10 +323,10 @@ class Owner {
     }
 
     static async forgotPassword(req, res, next) {
-        const { email } = req.body;
+        const { email, role } = req.body;
     
         try {
-          const user = await User.findOne({ email });
+          const user = await User.findOne({ email, role });
     
           if (!user) {
             return res.status(404).json(makeJsonResponse('User not found',  { email }, {}, 404, false));
@@ -359,9 +359,9 @@ class Owner {
       }
     
       static async resetPassword(req, res, next) {
-        const { email, otp, newPassword } = req.body;
+        const { email, otp, newPassword, role } = req.body;
         try {
-          const user = await User.findOne({ email });
+          const user = await User.findOne({ email, role });
           console.log(user.otp !== otp );
     
           if (!user || user.forgot_password_otp !== Number(otp) || new Date() > user.otpExpires) {
