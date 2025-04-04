@@ -146,6 +146,7 @@ module.exports = {
                 const nearbyDeliveryPartnersData = {
                     userId: nearbyDeliveryPartners._id,
                     name: nearbyDeliveryPartners.name,
+                    email: nearbyDeliveryPartners.email,
                     phone: nearbyDeliveryPartners.phone,    
                 };
 
