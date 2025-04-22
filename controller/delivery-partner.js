@@ -71,7 +71,7 @@ class deliveryPartner {
             console.log(otp);
             const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
             console.log(otpExpires);
-            await User.updateOne({ email }, { forgot_password_otp:otp, otpExpires });
+            await User.updateOne({ email, email }, { forgot_password_otp:otp, otpExpires });
         
             const mailOptions = {
                 from: process.env.EMAIL_USER,
@@ -106,7 +106,7 @@ class deliveryPartner {
             }
         
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-            await User.updateOne({ email }, { password: hashedPassword, otp: null, otpExpires: null });
+            await User.updateOne({ email, email }, { password: hashedPassword, otp: null, otpExpires: null });
         
             return res.status(200).json(makeJsonResponse('Password updated successfully',  { email,otp }, {}, 200, true));
         
