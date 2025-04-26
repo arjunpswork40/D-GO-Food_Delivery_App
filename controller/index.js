@@ -496,10 +496,6 @@ class controller {
             password,
             email,
             phone,
-            bankDetailsAccountName,
-            bankDetailsAccountNumber,
-            bankDetailsBankName,
-            bankDetailsIfscCode,
             deliveryPartnerstreet,
             deliveryPartnercity,
             deliveryPartnerstate,
@@ -542,12 +538,6 @@ class controller {
                 email,
                 role: "delivery_partner",
                 phone: phone,
-                bankDetails: {
-                    accountName: bankDetailsAccountName,
-                    accountNumber: bankDetailsAccountNumber,
-                    bankName: bankDetailsBankName,
-                    ifscCode: bankDetailsIfscCode,
-                },
                 address: {
                     street: deliveryPartnerstreet,
                     city: deliveryPartnercity,
