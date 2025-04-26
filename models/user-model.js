@@ -35,7 +35,7 @@ const userSchema = new Schema(
             priorityIndex: { type: Number,default: 0 },
             name: { type: String, required: false, validate: {
                 validator: (value) => {
-                    return /^[a-zA-Z]{2,15}$/.test(value)
+                  return /^[a-zA-Z\s]{5,}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 } },
@@ -76,6 +76,7 @@ const userSchema = new Schema(
             accountNumber: { type: String, required: false },
             bankName: { type: String, required: false },
             ifscCode: { type: String, required: false },
+            stripeAccountId: { type: String, required: false },
         },
         ratings: {
             averageRating: { type: Number, default: 0 },
@@ -92,7 +93,7 @@ const userSchema = new Schema(
             required: [true, "Name is required"],
             validate: {
                 validator: (value) => {
-                    return /^[a-zA-Z]{2,15}$/.test(value)
+                  return /^[a-zA-Z\s]{5,}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 }
@@ -165,6 +166,22 @@ const userSchema = new Schema(
               enum: ['active', 'inactive'],
               default: 'active',
             },
+            deliveries: [
+              {
+                date: Date,
+                status: "completed" | "pending",
+                paid: Boolean,
+                amount: Number
+              }
+            ],
+            failedPayouts: [
+              {
+                date: Date,
+                amount: Number,
+                reason: String
+              }
+            ],
+            totalEarnings: { type: Number, default: 0 },
             totalDeliveries: { type: Number, default: 0 },
             earnings: { type: Number, default: 0 },
           },

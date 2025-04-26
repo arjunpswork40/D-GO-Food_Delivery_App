@@ -436,6 +436,24 @@ module.exports = {
 
             if(updatedData) {
 
+                // update the delivery partner details in user model
+                await User.findByIdAndUpdate(
+                    userId,
+                    {
+                        $push: {
+                            "deliveryPartnerDetails.deliveries": {
+                                orderId: updatedData._id,
+                                paid: false,
+                                status: ORDER_STATUS.PAYOUT_COMPLETED
+                            }
+                        },
+                        $inc: {
+                            "deliveryPartnerDetails.totalEarnings": 2
+                        }
+                    },
+                    { new: true, runValidators: true } 
+                )
+
                 finalResponseFormat.status = true;
                 finalResponseFormat.message = "oreder status updated";
                 finalResponseFormat.data = updatedData;

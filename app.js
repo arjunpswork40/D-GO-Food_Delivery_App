@@ -9,6 +9,7 @@ const { makeJsonResponse } = require("./utils/response");
 const path = require('path');
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+require("./cron/payoutScheduler");
 
 // app.post(
 //   "/payment/stripe-payment-status-webhook",
