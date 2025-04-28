@@ -2,7 +2,7 @@ const { body, validationResult } = require('express-validator');
 const {makeJsonResponse} = require("../../../utils/response")
 
 const signupValidator = [
-    body('name').notEmpty().withMessage('Name is required').isLength({ min: 1, max: 60 }).withMessage('Delivery Partner name must be between 1 and 60 characters long.'),,
+    body('name').notEmpty().withMessage('Name is required').isLength({ min: 1, max: 60 }).withMessage('Delivery Partner name must be between 1 and 60 characters long.'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
     body('email').isEmail().withMessage('Invalid email address'),
     body('phone').isMobilePhone().withMessage('Invalid phone number'),
