@@ -35,7 +35,7 @@ const userSchema = new Schema(
             priorityIndex: { type: Number,default: 0 },
             name: { type: String, required: false, validate: {
                 validator: (value) => {
-                  return /^[a-zA-Z\s]{5,}$/.test(value.trim());
+                  return /^[a-zA-Z\s]{1,60}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 } },
@@ -93,7 +93,7 @@ const userSchema = new Schema(
             required: [true, "Name is required"],
             validate: {
                 validator: (value) => {
-                  return /^[a-zA-Z\s]{5,}$/.test(value.trim());
+                  return /^[a-zA-Z\s]{1,60}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 }
