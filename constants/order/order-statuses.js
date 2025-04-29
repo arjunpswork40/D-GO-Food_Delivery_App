@@ -1,6 +1,7 @@
 const ORDER_STATUS = {
     CUSTOMER_PLACED_ORDER : 'customer_placed_order',
     OWNER_STARTED_PREPARATION : 'owner_started_preparation',
+    OWNER_PLACED_ORDER : 'owner_placed_order', // for owner to place order for delivery partner directly
     DELIVERY_PARTNER_ACCEPTED_ORDER : 'delivery_partner_accepted_order',
     DELIVERY_PARTNER_REJECTED_ORDER : 'delivery_partner_rejected_order',
     OWNER_COMPLETED_THE_PREPARATION : 'owner_completed_the_preparation',

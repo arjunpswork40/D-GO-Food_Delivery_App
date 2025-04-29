@@ -5,9 +5,10 @@ const User = require("../../../models/user-model")
 const {USER_TYPES} = require("../../../constants/user/user-constants")
 
 module.exports = {
-    placeOrder: async (cartItem, addressDetails, phone, paidThrough, user) => {
+    placeOrder: async (cartItem, addressDetails, phone, paidThrough, user, orderFromOwner) => {
         try {
 
+            const orderStatus = orderFromOwner ? ORDER_STATUS.OWNER_PLACED_ORDER : ORDER_STATUS.CUSTOMER_PLACED_ORDER;
             const address = {
                 label : addressDetails?.label ?? '',
                 type : addressDetails?.type ?? '',
@@ -22,9 +23,9 @@ module.exports = {
             }
 
             const logData = {
-                status: ORDER_STATUS.CUSTOMER_PLACED_ORDER,
+                status: orderStatus,
                 userId: user._id,
-                userType: USER_TYPES.CUSTOMER
+                userType: orderFromOwner ? USER_TYPES.OWNER : USER_TYPES.CUSTOMER
             }
 
             const order = new Order({
@@ -37,10 +38,10 @@ module.exports = {
                 totalAmount: cartItem.totalPrice,
                 orderDate: new Date(),
                 paidThrough: paidThrough,
-                status: ORDER_STATUS.CUSTOMER_PLACED_ORDER  ,
+                status: orderStatus  ,
                 logs: [logData]
             })
-
+            
             const savedOrder = await order.save();
             await User.findByIdAndUpdate(
                 user._id,

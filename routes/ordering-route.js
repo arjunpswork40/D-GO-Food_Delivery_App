@@ -4,8 +4,8 @@ const controller = require("../controller/order")
 const auth = require("../middleware/auth-middleware")
 
 const {
-        customerPlaceOrderValidator
-    } = require("../middleware/validator/order/cutomer-place-order-validator");
+    customerPlaceOrderValidator
+} = require("../middleware/validator/order/cutomer-place-order-validator");
 const {
     prepareOrderValidator
 } = require("../middleware/validator/order/owner-prepare-validation");
@@ -15,6 +15,10 @@ const {
 const {
     orderCompletedValidator
 } = require("../middleware/validator/order/order-completed-validator.js");
+
+const { 
+    ownerPlacedOrderValidator 
+} = require("../middleware/validator/order/owner-place-order-validator.js");
 
 router.post(
     "/",
@@ -42,6 +46,13 @@ router.post(
     auth.decodeToken,
     prepareOrderValidator,
     controller.ownerCompletedThePrepartion
+)
+
+router.post(
+    "/owner-place-order",
+    auth.decodeToken,
+    ownerPlacedOrderValidator,
+    controller.ownerPlaceOwner
 )
 
 router.post(
