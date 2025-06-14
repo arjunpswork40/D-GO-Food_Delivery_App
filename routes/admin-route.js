@@ -69,5 +69,35 @@ router.get(
     controller.allpartners
 )
 
+router.post(
+    "/user/create",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.createUser
+)
+
+router.get(
+    "/users/get",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.getAllUsers
+)
+
+
+router.get(
+    "/user/get/:id",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.getUser
+)
+
+
+router.put(
+    "/user/update/:id",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.updateUser
+)
+
  
 module.exports = router
