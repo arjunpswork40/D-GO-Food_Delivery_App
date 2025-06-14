@@ -99,5 +99,12 @@ router.put(
     controller.updateUser
 )
 
+
+router.get(
+    "/dashboard/users-count",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.getUserCount
+)
  
 module.exports = router
