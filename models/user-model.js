@@ -169,7 +169,11 @@ const userSchema = new Schema(
             deliveries: [
               {
                 date: Date,
-                status: "completed" | "pending",
+                status: {
+                  type: String,
+                  enum: ['completed', 'pending'],
+                  default: 'pending'
+                },
                 paid: Boolean,
                 amount: Number
               }
