@@ -106,5 +106,12 @@ router.get(
     // auth.isAdmin,
     controller.getDashboardCount
 )
+
+router.get(
+    "/dashboard/recent-sales",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.DashboardRecentSales
+)
  
 module.exports = router

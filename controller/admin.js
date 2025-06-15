@@ -449,6 +449,18 @@ static async getDashboardCount(req, res, next) {
   }
 }
 
+static async DashboardRecentSales(req, res, next) {
+  try {
+    const orders = await orderModel.find().sort({ createdAt: -1 }).limit(10);
+    res.status(200).json({
+      status: true,
+      data: orders
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+
+}
 
 
 }
