@@ -67,7 +67,7 @@ class customerController {
       } = req.params;
       const { keyword } = req.query;
       const user = req.user;
-      const result = await searchHotelsByKeyword(keyword, page, limit, user.customerDetails.currentLocation);
+      const result = await searchHotelsByKeyword(keyword, page, limit, user?.customerDetails?.currentLocation);
 
       return res.status(200).json(makeJsonResponse('Search result', { result }, {}, 200, true));
     } catch (error) {
@@ -112,11 +112,11 @@ class customerController {
       const user = req.user;
 
       let highlightedRestaurants = await getHighlightedHotels(page, limit);
-      let restaurantList = await getHotelByFilter(page, limit, user.customerDetails.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
-      let favoriteRestaurantIds = await User.findById(user._id, "customerDetails.favoriteRestaurants").lean();
-      favoriteRestaurantIds = favoriteRestaurantIds.customerDetails.favoriteRestaurants || [];
+      let restaurantList = await getHotelByFilter(page, limit, user?.customerDetails?.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+      let favoriteRestaurantIds = await User.findById(user?._id, "customerDetails.favoriteRestaurants").lean();
+      favoriteRestaurantIds = favoriteRestaurantIds?.customerDetails.favoriteRestaurants || [];
       console.log(favoriteRestaurantIds)
-      restaurantList = restaurantList.map(item => ({
+      restaurantList = restaurantList ? restaurantList.map(item => ({
           _id: item._id,
           image: item.hotelDetails.images.hotelMainImage[0],
           name: item.hotelDetails.name,
@@ -124,7 +124,7 @@ class customerController {
           ratings: item.ratings.averageRating,
           orderCount: item.orderCount,
           isFavorite: favoriteRestaurantIds.map(id => id.toString()).includes(item._id.toString()) // Add isFavorite flag
-      }));
+      })) : [];
 
       highlightedRestaurants = highlightedRestaurants.map(item => ({
           _id: item._id,

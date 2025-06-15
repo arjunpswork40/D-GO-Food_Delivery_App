@@ -36,7 +36,7 @@ const hotelSchema = new Schema(
   {
     hotelId: {
         type: Schema.Types.ObjectId,  // Foreign key reference to the Hotel collection
-        ref: 'User',                  // The model that this foreign key references
+        ref: 'Users',                  // The model that this foreign key references
         required: true,
     },
     foodItems: {
