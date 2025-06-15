@@ -6,6 +6,7 @@ const Admin = require("../models/admin-model")
 const { makeJsonResponse } = require("../utils/response")
 const passAuth = require("../middleware/passwordHash-middleware")
 const auth = require("../middleware/auth-middleware")
+const orderModel = require("../models/order-model")
 
 class controller {
   static async login(req, res, next) {
@@ -395,55 +396,48 @@ static async updateUser(req, res, next) {
   }
 }
 
-static async getUserCount(req, res, next) {
+static async getDashboardCount(req, res, next) {
   try {
-    const { startDate, endDate } = req.query;
 
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        status: false,
-        error: "startDate and endDate are required in YYYY-MM-DD format",
-      });
-    }
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // Include entire end day
-
-    // All roles with labels
-    const roles = [
-      { role: "customer", label: "Customer" },
-      { role: "owner", label: "Owner" },
-      { role: "delivery_partner", label: "Delivery Partner" }
-    ];
-
-    // Aggregate from DB
-    const counts = await User.aggregate([
+    const result = [
       {
-        $match: {
-          createdAt: { $gte: start, $lte: end }
-        }
+        "label" : "Orders",
+        "value" : await orderModel.countDocuments(),
+        "sub_label" : null
       },
       {
+        "label" : "Users",
+        "value" : await User.countDocuments({
+          "role" :"customer"
+        }),
+        "sub_label" : null
+      },
+      {
+        "label" : "Hotels",
+        "value" : await User.countDocuments({
+          "role" :"owner"
+        }),
+        "sub_label" : null
+      }
+    ];
+
+    const revenue = await orderModel.aggregate([
+      {
         $group: {
-          _id: "$role",
-          count: { $sum: 1 }
+          _id: null,
+          totalAmount: { $sum: "$totalAmount" }
         }
       }
     ]);
 
-    // Map DB result to a dictionary for lookup
-    const countMap = {};
-    counts.forEach(({ _id, count }) => {
-      countMap[_id] = count;
-    });
-
-    // Build response with all roles, default count to 0 if not found
-    const result = roles.map(({ role, label }) => ({
-      role,
-      count: countMap[role] || 0,
-      label
-    }));
+    //appen revenue in 2nd index of result
+    if (revenue.length > 0) {
+      result.splice(1, 0, {
+        "label" : "Revenue",
+        "value" : revenue[0].totalAmount,
+        "sub_label" : null
+      });
+    }
 
     res.status(200).json({
       status: true,

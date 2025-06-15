@@ -101,10 +101,10 @@ router.put(
 
 
 router.get(
-    "/dashboard/users-count",
+    "/dashboard/count",
     // auth.decodeTokenAdmin,
     // auth.isAdmin,
-    controller.getUserCount
+    controller.getDashboardCount
 )
  
 module.exports = router
