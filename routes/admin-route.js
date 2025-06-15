@@ -113,5 +113,12 @@ router.get(
     // auth.isAdmin,
     controller.DashboardRecentSales
 )
+
+router.get(
+    "/dashboard/best-sellers",
+    // auth.decodeTokenAdmin,
+    // auth.isAdmin,
+    controller.getBestSellingRestaurants
+)
  
 module.exports = router

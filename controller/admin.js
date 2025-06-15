@@ -463,6 +463,64 @@ static async DashboardRecentSales(req, res, next) {
 }
 
 
+static async getBestSellingRestaurants(req, res, next) {
+  try {
+    const topRestaurants = await orderModel.aggregate([
+      {
+        $match: {
+          restaurantId: { $ne: null }  // Exclude orders without a restaurant
+        }
+      },
+      {
+        $group: {
+          _id: "$restaurantId",
+          totalSales: { $sum: "$totalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { totalSales: -1 } // Sort by revenue
+      },
+      {
+        $limit: 5 // Top 5 restaurants (change as needed)
+      },
+      {
+        $lookup: {
+          from: "users", // collection name must match MongoDB's collection name (usually lowercase)
+          localField: "_id",
+          foreignField: "_id",
+          as: "restaurantDetails"
+        }
+      },
+      {
+        $unwind: "$restaurantDetails"
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: "$_id",
+          totalSales: 1,
+          orderCount: 1,
+          name: "$restaurantDetails.name",
+          email: "$restaurantDetails.email",
+          phone: "$restaurantDetails.phone",
+          profile_image: "$restaurantDetails.profile_image"
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      status: true,
+      data: topRestaurants
+    });
+
+  } catch (err) {
+    console.error("Best Selling Restaurant Error:", err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+}
+
+
 }
 
 
