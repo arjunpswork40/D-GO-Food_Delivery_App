@@ -25,7 +25,7 @@ class controller {
       const isMatch = passAuth.compareHash(password, userPW)
 
       if (!isMatch) {
-        return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is correct" }, 401, false));
+        return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is incorrect" }, 401, false));
       }
 
       const userJson = auth.authJSON(user)

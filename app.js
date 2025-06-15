@@ -6,12 +6,55 @@ const bodyParser = require("body-parser")
 const multer = require("multer");
 const { PORT } = process.env
 const { makeJsonResponse } = require("./utils/response");
+const path = require('path');
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+require("./cron/payoutScheduler");
 
+// app.post(
+//   "/payment/stripe-payment-status-webhook",
+//   express.raw({ type: "application/json" }),
+//   async (req, res) => {
+//     const sig = req.headers["stripe-signature"];
+//     // console.log("🔍 Raw Webhook Body (before verification):", req.body.toString());
+
+//     try {
+//       // ✅ Ensure `req.body` is a raw Buffer
+//       const event = stripe.webhooks.constructEvent(
+//         req.body,
+//         sig,
+//         process.env.STRIPE_WEBHOOK_SECRET
+//       );
+
+//       console.log("✅ Webhook Verified Successfully:", event);
+
+//       res.status(200).json({ received: true });
+//     } catch (err) {
+//       console.error("❌ Webhook Signature Verification Failed:", err.message);
+//       res.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+//   }
+// );
 app.use(bodyParser.urlencoded({extended: false}))
-app.use(bodyParser.json())
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      if (req.originalUrl.includes("/payment/stripe-payment-status-webhook")) {
+        req.rawBody = buf; // Store raw body for Stripe verification
+      }
+    },
+  })
+);
 // app.use(fileUpload())
 
 app.use("/", require("./routes/index"))
+app.use('/uploads/hotel', express.static(path.join(__dirname, 'uploads/hotel')));
+// Route to serve an HTML file
+app.get("/privacy-policy", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "privacy-policy.html"));
+});
+
+
 // error handler
 app.use((req, res, next) => {
     const response = makeJsonResponse('Not Found', {}, { message: "The requested resource was not found" }, 404, false);

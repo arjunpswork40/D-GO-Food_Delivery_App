@@ -1,6 +1,33 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 
+const addressSchema = new Schema(
+  {
+    label: { type: String }, // e.g., "Home", "Work"
+    // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
+    // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
+    type: {
+      type: String,
+      enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
+      required: false,  // This makes it optional
+    },
+    coordinates: {
+      type: [Number],  // [longitude, latitude]
+      required: false,
+    },
+    street: { type: String },
+    city: { type: String },
+    state: { type: String },
+    country: { type: String },
+    zipCode: { type: String },
+    primaryAddress: { type: Boolean, default: false },
+    lat: { type: Number, required: false }, 
+    lng: { type: Number, required: false }, 
+  },
+  {
+      timestamps: true
+  }
+)
 const userSchema = new Schema(
     {  
         hotelDetails: {
@@ -8,7 +35,7 @@ const userSchema = new Schema(
             priorityIndex: { type: Number,default: 0 },
             name: { type: String, required: false, validate: {
                 validator: (value) => {
-                    return /^[a-zA-Z]{2,15}$/.test(value)
+                  return /^[a-zA-Z\s]{1,60}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 } },
@@ -30,6 +57,8 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              lat: { type: Number, required: false }, 
+              lng: { type: Number, required: false }, 
             },
             contactNumber: { type: String, required: false },
             openingHours: {
@@ -47,6 +76,7 @@ const userSchema = new Schema(
             accountNumber: { type: String, required: false },
             bankName: { type: String, required: false },
             ifscCode: { type: String, required: false },
+            stripeAccountId: { type: String, required: false },
         },
         ratings: {
             averageRating: { type: Number, default: 0 },
@@ -63,7 +93,7 @@ const userSchema = new Schema(
             required: [true, "Name is required"],
             validate: {
                 validator: (value) => {
-                    return /^[a-zA-Z]{2,15}$/.test(value)
+                  return /^[a-zA-Z\s]{1,60}$/.test(value.trim());
                 },
                 message: problem => `${problem.value} is not a valid name`
                 }
@@ -80,15 +110,6 @@ const userSchema = new Schema(
                 message: problem => `${problem.value} is not valid`
                 }
         },
-
-        address: {
-            street: { type: String },
-            city: { type: String },
-            state: { type: String },
-            country: { type: String },
-            pincode: { type: String },
-          },
-
         phone: {
             type: Number,
             validate: {
@@ -132,38 +153,41 @@ const userSchema = new Schema(
                 type: [Number],  // [longitude, latitude]
                 required: false,
               },
+              street: { type: String },
+              city: { type: String },
+              state: { type: String },
+              country: { type: String },
+              zipCode: { type: String },
+              lat: { type: Number, required: false }, 
+              lng: { type: Number, required: false }, 
             },
             status: {
               type: String,
               enum: ['active', 'inactive'],
               default: 'active',
             },
+            deliveries: [
+              {
+                date: Date,
+                status: "completed" | "pending",
+                paid: Boolean,
+                amount: Number
+              }
+            ],
+            failedPayouts: [
+              {
+                date: Date,
+                amount: Number,
+                reason: String
+              }
+            ],
+            totalEarnings: { type: Number, default: 0 },
             totalDeliveries: { type: Number, default: 0 },
             earnings: { type: Number, default: 0 },
           },
         customerDetails: {
-            favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // References to Owner Users
-            savedAddresses: [
-              {
-                label: { type: String }, // e.g., "Home", "Work"
-                // type: { type: String, default: "Point" },  // GeoJSON type, always 'Point'
-                // coordinates: { type: [Number], index: "2dsphere" },  // [Longitude, Latitude]
-                type: {
-                  type: String,
-                  enum: ['Point'],  // This defines that the type is a Point (for geospatial data)
-                  required: false,  // This makes it optional
-                },
-                coordinates: {
-                  type: [Number],  // [longitude, latitude]
-                  required: false,
-                },
-                address: { type: String },
-                city: { type: String },
-                state: { type: String },
-                country: { type: String },
-                pincode: { type: String },
-              },
-            ],
+            favoriteRestaurants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Users' }], // References to Owner Users
+            savedAddresses: [addressSchema],
             orders: [
               {
                 orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
@@ -186,7 +210,7 @@ const userSchema = new Schema(
             },
           },
 
-        order: [
+        orders: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "Order"
@@ -198,7 +222,10 @@ const userSchema = new Schema(
              trim: true,
              enum: ["customer", "owner", "delivery_partner", "admin"],
              default: "customer"
-        }
+        },
+        profile_image: { type: String, required: false },
+        forgot_password_otp: { type: Number, required: false },
+        otpExpires: { type: Date, default: null }
     },
     
     {
@@ -208,6 +235,8 @@ const userSchema = new Schema(
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 userSchema.index({ "hotelDetails.location": "2dsphere" });
+userSchema.index({ "deliveryPartnerDetails.currentLocation": "2dsphere" });
+userSchema.index({ "deliveryPartnerDetails.currentLocation.coordinates": "2dsphere" });
 userSchema.index({ "hotelDetails.priorityIndex": -1 });
 userSchema.index({ "ratingd.ratings.averageRating": -1 });
 

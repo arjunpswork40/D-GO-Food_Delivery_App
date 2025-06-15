@@ -88,6 +88,7 @@ class authorisation {
             email: user.email,
             role: user.role,
             firstName: user.firstName,
+            userId: user._id,
             token: this.genToken(user)
         }
     }
@@ -102,7 +103,7 @@ class authorisation {
             },
             TOKEN_KEY,
             {
-                expiresIn: 3600
+                expiresIn: 86430 * 24 * 60 * 60 // 30 days in seconds00
             }
         )
     }
