@@ -3,8 +3,22 @@ const {USER_TYPES} = require("../constants/user/user-constants")
 const User = require("../models/user-model")
 const bcrypt = require("bcrypt");
 const { BCRYPT_SALT } = require("../config/index")
+const nodemailer = require("nodemailer");
+
+// Nodemailer setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+  }
+});
+
+
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 class deliveryPartner {
+
       static async changePassword(req, res, next) { 
         const { 
           currentPassword,
@@ -44,19 +58,20 @@ class deliveryPartner {
       }
 
       static async forgotPassword(req, res, next) {
-          const { email } = req.body;
+          const { email, role } = req.body;
       
           try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email,role });
       
             if (!user) {
               return res.status(404).json(makeJsonResponse('User not found',  { email }, {}, 404, false));
             }
         
             const otp = generateOTP();
+            console.log(otp);
             const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP expires in 10 mins
-        
-            await User.updateOne({ email }, { forgot_password_otp:otp, otpExpires });
+            console.log(otpExpires);
+            await User.updateOne({ email, role }, { forgot_password_otp:otp, otpExpires });
         
             const mailOptions = {
                 from: process.env.EMAIL_USER,
@@ -80,9 +95,9 @@ class deliveryPartner {
         }
       
         static async resetPassword(req, res, next) {
-          const { email, otp, newPassword } = req.body;
+          const { email, otp, newPassword, role } = req.body;
           try {
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email, role });
             console.log(user.otp !== otp );
       
             if (!user || user.forgot_password_otp !== Number(otp) || new Date() > user.otpExpires) {
@@ -91,7 +106,7 @@ class deliveryPartner {
             }
         
             const hashedPassword = await bcrypt.hash(newPassword, 10);
-            await User.updateOne({ email }, { password: hashedPassword, otp: null, otpExpires: null });
+            await User.updateOne({ email, role }, { password: hashedPassword, otp: null, otpExpires: null });
         
             return res.status(200).json(makeJsonResponse('Password updated successfully',  { email,otp }, {}, 200, true));
         

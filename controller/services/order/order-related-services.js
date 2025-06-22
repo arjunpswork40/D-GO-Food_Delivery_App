@@ -5,9 +5,10 @@ const User = require("../../../models/user-model")
 const {USER_TYPES} = require("../../../constants/user/user-constants")
 
 module.exports = {
-    placeOrder: async (cartItem, addressDetails, phone, paidThrough, user) => {
+    placeOrder: async (cartItem, addressDetails, phone, paidThrough, user, orderFromOwner) => {
         try {
 
+            const orderStatus = orderFromOwner ? ORDER_STATUS.OWNER_PLACED_ORDER : ORDER_STATUS.CUSTOMER_PLACED_ORDER;
             const address = {
                 label : addressDetails?.label ?? '',
                 type : addressDetails?.type ?? '',
@@ -22,9 +23,9 @@ module.exports = {
             }
 
             const logData = {
-                status: ORDER_STATUS.CUSTOMER_PLACED_ORDER,
+                status: orderStatus,
                 userId: user._id,
-                userType: USER_TYPES.CUSTOMER
+                userType: orderFromOwner ? USER_TYPES.OWNER : USER_TYPES.CUSTOMER
             }
 
             const order = new Order({
@@ -37,10 +38,10 @@ module.exports = {
                 totalAmount: cartItem.totalPrice,
                 orderDate: new Date(),
                 paidThrough: paidThrough,
-                status: ORDER_STATUS.CUSTOMER_PLACED_ORDER  ,
+                status: orderStatus  ,
                 logs: [logData]
             })
-
+            
             const savedOrder = await order.save();
             await User.findByIdAndUpdate(
                 user._id,
@@ -103,19 +104,17 @@ module.exports = {
                     runValidators: true
                 }
             )
-            console.log("restaurantLocation===>",orderId)
 
             if(updatedData) {
                 // send notification
 
                 // find the closet first delivery partner.
 
-                const restaurantLocation = await User.findById(updatedData.restaurantId).select("hotelDetails.location hotelDetails.name");
+                const restaurantLocation = await User.findById(userId).select("hotelDetails.location hotelDetails.coordinates hotelDetails.name");
 
-
-                const nearByLimit = process.env.NEAR_BY_MAX_DISTANCE || 5000;
-                const longitude = restaurantLocation.hotelDetails.location.lng;
-                const latitude = restaurantLocation.hotelDetails.location.lat;
+                const nearByLimit = process.env.NEAR_BY_MAX_DISTANCE || 50000;
+                const longitude = restaurantLocation.hotelDetails.location.lng || restaurantLocation.hotelDetails.location.coordinates[0];
+                const latitude = restaurantLocation.hotelDetails.location.lat || restaurantLocation.hotelDetails.location.coordinates[1];
 
                 const nearbyDeliveryPartners = await User.findOne({
                     role: USER_TYPES.DELIVERY_PARTNER,
@@ -145,9 +144,27 @@ module.exports = {
                     runValidators: true
                 })
 
+                const nearbyDeliveryPartnersData = {
+                    userId: nearbyDeliveryPartners._id,
+                    name: nearbyDeliveryPartners.name,
+                    email: nearbyDeliveryPartners.email,
+                    phone: nearbyDeliveryPartners.phone,    
+                };
+
                 finalResponseFormat.status = true;
                 finalResponseFormat.message = "oreder status updated";
-                finalResponseFormat.data = updatedData;
+                finalResponseFormat.data = {
+                    items: updatedData.items,
+                    totalAmount: updatedData.totalAmount,
+                    address: updatedData.address,
+                    phone: updatedData.phone,
+                    orderDate: updatedData.orderDate,
+                    restaurantId: updatedData.restaurantId,
+                    status: updatedData.status,
+                    cartId: updatedData.cartId,
+                    deliveryPartner: nearbyDeliveryPartnersData,
+                    paidThrough: updatedData.paidThrough,
+                };
                 return finalResponseFormat;
             } else {
                 finalResponseFormat.message = "oreder with given ID is not found";
@@ -419,6 +436,24 @@ module.exports = {
             )
 
             if(updatedData) {
+
+                // update the delivery partner details in user model
+                await User.findByIdAndUpdate(
+                    userId,
+                    {
+                        $push: {
+                            "deliveryPartnerDetails.deliveries": {
+                                orderId: updatedData._id,
+                                paid: false,
+                                status: ORDER_STATUS.PAYOUT_COMPLETED
+                            }
+                        },
+                        $inc: {
+                            "deliveryPartnerDetails.totalEarnings": 2
+                        }
+                    },
+                    { new: true, runValidators: true } 
+                )
 
                 finalResponseFormat.status = true;
                 finalResponseFormat.message = "oreder status updated";

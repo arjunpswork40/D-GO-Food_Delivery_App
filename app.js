@@ -9,6 +9,7 @@ const { makeJsonResponse } = require("./utils/response");
 const path = require('path');
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+require("./cron/payoutScheduler");
 
 // app.post(
 //   "/payment/stripe-payment-status-webhook",
@@ -48,7 +49,10 @@ app.use(
 
 app.use("/", require("./routes/index"))
 app.use('/uploads/hotel', express.static(path.join(__dirname, 'uploads/hotel')));
-
+// Route to serve an HTML file
+app.get("/privacy-policy", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "privacy-policy.html"));
+});
 
 
 // error handler

@@ -496,10 +496,6 @@ class controller {
             password,
             email,
             phone,
-            bankDetailsAccountName,
-            bankDetailsAccountNumber,
-            bankDetailsBankName,
-            bankDetailsIfscCode,
             deliveryPartnerstreet,
             deliveryPartnercity,
             deliveryPartnerstate,
@@ -542,12 +538,6 @@ class controller {
                 email,
                 role: "delivery_partner",
                 phone: phone,
-                bankDetails: {
-                    accountName: bankDetailsAccountName,
-                    accountNumber: bankDetailsAccountNumber,
-                    bankName: bankDetailsBankName,
-                    ifscCode: bankDetailsIfscCode,
-                },
                 address: {
                     street: deliveryPartnerstreet,
                     city: deliveryPartnercity,
@@ -603,7 +593,7 @@ class controller {
             const isMatch = passAuth.compareHash(password, userPW)
 
             if (!isMatch) {
-                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is correct" }, 401, false));
+                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is incorrect" }, 401, false));
             }
 
             const userJson = auth.authJSON(user)
@@ -631,7 +621,7 @@ class controller {
             const isMatch = passAuth.compareHash(password, userPW)
 
             if (!isMatch) {
-                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is correct" }, 401, false));
+                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is incorrect" }, 401, false));
             }
 
             const userJson = auth.authJSON(user)
@@ -659,7 +649,7 @@ class controller {
             const isMatch = passAuth.compareHash(password, userPW)
 
             if (!isMatch) {
-                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is correct" }, 401, false));
+                return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "email or password is incorrect" }, 401, false));
             }
 
             const userJson = auth.authJSON(user)

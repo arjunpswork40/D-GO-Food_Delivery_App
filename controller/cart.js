@@ -140,22 +140,22 @@ class CartClass {
           // Lookup restaurant (User) details using restaurantId
           {
           $lookup: {
-          from: "users",
-          localField: "restaurantId",
-          foreignField: "_id",
-          as: "restaurantDetails"
-          }
+              from: "users",
+              localField: "restaurantId",
+              foreignField: "_id",
+              as: "restaurantDetails"
+            }
           },
           { $unwind: "$restaurantDetails" }, // Expand restaurant details
           
           // Lookup all Food documents where any foodItem in the cart exists
           {
           $lookup: {
-          from: "foods", // Food collection
-          localField: "foodItems.foodId",
-          foreignField: "foodItems._id",
-          as: "foodDetails"
-          }
+              from: "foods", // Food collection
+              localField: "foodItems.foodId",
+              foreignField: "foodItems._id",
+              as: "foodDetails"
+            }
           },
 
           // Map and restructure foodItems with matched food details
@@ -175,11 +175,11 @@ class CartClass {
                   {
                   $filter: {
                       input: {
-                      $reduce: {
-                      input: "$foodDetails",
-                      initialValue: [],
-                      in: { $concatArrays: ["$$value", "$$this.foodItems"] }
-                      }
+                        $reduce: {
+                          input: "$foodDetails",
+                          initialValue: [],
+                          in: { $concatArrays: ["$$value", "$$this.foodItems"] }
+                        }
                       },
                       as: "foodItem",
                       cond: { $eq: ["$$foodItem._id", "$$cartItem.foodId"] }
@@ -197,16 +197,16 @@ class CartClass {
           // Final projection to include restaurant and structured food details
           {
           $project: {
-          "userId": 1,
-          "restaurantId": 1,
-          "restaurantDetails.name": 1,
-          "restaurantDetails.email": 1,
-          "restaurantDetails.phone": 1,
-          "foodItems": 1,
-          "totalPrice": 1,
-          "createdAt": 1,
-          "updatedAt": 1
-          }
+              "userId": 1,
+              "restaurantId": 1,
+              "restaurantDetails.name": 1,
+              "restaurantDetails.email": 1,
+              "restaurantDetails.phone": 1,
+              "foodItems": 1,
+              "totalPrice": 1,
+              "createdAt": 1,
+              "updatedAt": 1
+            }
           }
       ]);
 
@@ -217,7 +217,9 @@ class CartClass {
             _id: cart._id,
             customerId: cart.userId,
             restaurantId: cart.restaurantId,
-            totalPrice: cart.totalPrice,
+            totalPrice: cart.totalPrice + 55 + 45,
+            deliveryFee: 55,
+            tax: 45,
             createdAt: cart.createdAt,
             restaurantDetails: {
               name: cart.restaurantDetails.name

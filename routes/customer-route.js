@@ -24,31 +24,31 @@ router.get(
 
 router.get(
     "/home/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.getHomeDetails
 )
 
 router.get(
     "/search/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.search
 )
 
 router.get(
     "/offers/restaurant/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.restaurantOffers
 )
 
 router.get(
     "/restaurants/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.restaurantList
 )
 
 router.get(
     "/restaurant/:restaurantId/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     getRestaurantDetailsValidator,
     controller.restaurantDetails
 )
@@ -104,6 +104,17 @@ router.post(
     auth.decodeToken,
     addOrRemoveFavoriteListValidator,
     controller.addOrRemoveFromFavoriteList
+)
+router.get(
+    "/offers/:page/:limit",
+    auth.decodeToken,
+    controller.getOffers
+)
+
+router.get(
+    "/offer/:offerId",
+    auth.decodeToken,
+    controller.getOfferById
 )
 
 router.get(

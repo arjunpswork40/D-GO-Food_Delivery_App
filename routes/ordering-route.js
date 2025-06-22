@@ -4,8 +4,8 @@ const controller = require("../controller/order")
 const auth = require("../middleware/auth-middleware")
 
 const {
-        customerPlaceOrderValidator
-    } = require("../middleware/validator/order/cutomer-place-order-validator");
+    customerPlaceOrderValidator
+} = require("../middleware/validator/order/cutomer-place-order-validator");
 const {
     prepareOrderValidator
 } = require("../middleware/validator/order/owner-prepare-validation");
@@ -15,6 +15,10 @@ const {
 const {
     orderCompletedValidator
 } = require("../middleware/validator/order/order-completed-validator.js");
+
+const { 
+    ownerPlacedOrderValidator 
+} = require("../middleware/validator/order/owner-place-order-validator.js");
 
 router.post(
     "/",
@@ -45,6 +49,13 @@ router.post(
 )
 
 router.post(
+    "/owner-place-order",
+    auth.decodeToken,
+    ownerPlacedOrderValidator,
+    controller.ownerPlaceOwner
+)
+
+router.post(
     "/order-picked-up",
     auth.decodeToken,
     prepareOrderValidator,
@@ -65,9 +76,45 @@ router.get(
 )
 
 router.get(
+    "/delivery-partner/list/completed/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerCompletedOrders
+)
+
+router.get(
+    "/delivery-partner/list/cancelled/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerCancelledOrders
+)
+
+router.get(
+    "/delivery-partner/list/rejected/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerRejectedOrders
+)
+
+router.get(
+    "/delivery-partner/list/accepted/:page/:limit",
+    auth.decodeToken,
+    controller.deliveryPartnerAcceptedOrders
+)
+
+router.get(
     "/customer/list/:page/:limit",
     auth.decodeToken,
     controller.orderHistroy
+)
+
+router.get(
+    "/customer/list/completed/:page/:limit",
+    auth.decodeToken,
+    controller.customerCompletedOrders
+)
+
+router.get(
+    "/customer/list/cancelled/:page/:limit",
+    auth.decodeToken,
+    controller.customerCancelledOrders
 )
 
 router.get(

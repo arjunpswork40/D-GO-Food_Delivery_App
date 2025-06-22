@@ -6,10 +6,23 @@ const {
 class foodController{
   static async allFoods(req, res, next) {
     try {
-      const allFoods = await Food.find({available: true})
+      // const allFoods = await Food.find({available: true})
+
+       const hotels = await Food.find({ "foodItems.available": true })
+          .populate("hotelId") // This will populate hotel details from User collection
+          .lean();
+
+        // Filter foodItems to include only available ones
+        const result = hotels.map((hotel) => {
+          return {
+            hotelId: hotel.hotelId._id,
+            hotelDetails: hotel.hotelId.hotelDetails, // This includes User details due to populate
+            foodItems: hotel.foodItems.filter((item) => item.available),
+          };
+        });
       // return res.status(200).json(allFoods)
 
-       return res.status(200).json(makeJsonResponse('Success', { message: "All foos ",allFoods },{}, 200, true));
+       return res.status(200).json(makeJsonResponse('Success', { message: "All foods ",result },{}, 200, true));
 
 
     } catch (error) {
@@ -47,9 +60,10 @@ class foodController{
           description: finalData.description,
           category: finalData.category,
           price: finalData.price,
-          deliveryFee : 54.00,
-          taxesAndCharges: 26.67,
-          totalPay: finalData.price + 54.00 + 26.67
+          // deliveryFee : 54.00,
+          // taxesAndCharges: 26.67,
+          // totalPay: finalData.price + 54.00 + 26.67,
+          cartEntry: foodDetails.cartEntry
         }
 
         finalData.images = finalData.images[0];

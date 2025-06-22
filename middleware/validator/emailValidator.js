@@ -1,13 +1,10 @@
 const { body, validationResult } = require('express-validator');
 const { makeJsonResponse } = require("../../utils/response");
 
-const forgotPasswordValidator = [
+const emailValidator = [
     body('email')
         .notEmpty().withMessage('Email is required.')
         .isEmail().withMessage('Email must be a valid email address.'),
-    body('role')
-        .notEmpty().withMessage('Role is required.')
-        .isIn(['owner', 'delivery_partner', 'customer']).withMessage('Unidefined role.'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -18,4 +15,4 @@ const forgotPasswordValidator = [
     }
 ];
 
-module.exports = { forgotPasswordValidator };
+module.exports = { emailValidator };

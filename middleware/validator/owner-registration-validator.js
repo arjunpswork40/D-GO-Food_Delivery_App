@@ -4,7 +4,7 @@ const hotelOwnerValidationRules = [
     // Owner Details Validation
     body('name')
         .notEmpty().withMessage('Owner name is required.')
-        .isLength({ min: 3 }).withMessage('Owner name must be at least 3 characters long.'),
+        .isLength({ min: 1, max: 60 }).withMessage('Owner name must be between 1 and 60 characters long.'),
     body('email')
         .notEmpty().withMessage('Email is required.')
         .isEmail().withMessage('Invalid email format.'),

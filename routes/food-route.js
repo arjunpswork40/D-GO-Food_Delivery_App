@@ -6,21 +6,21 @@ const {foodDetailValidator} = require("../middleware/validator/food/food-detail-
 
 router.get(
     "/all",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.allFoods
 )
 
 router.get(
     "/:foodId",
-    auth.decodeToken,
+    // auth.decodeToken,
     foodDetailValidator,
     controller.foodDetail
 )
 
-router.get(
-    "/:id",
-    auth.decodeToken,
-    controller.aFoodDetails
-)
+// router.get(
+//     "/:id",
+//     auth.decodeToken,
+//     controller.aFoodDetails
+// )
 
 module.exports = router

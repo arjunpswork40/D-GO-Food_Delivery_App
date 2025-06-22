@@ -1,6 +1,7 @@
 const { ORDER_STATUS } = require("../../../constants/order/order-statuses")
 const notificationsModel = require("../../../models/notifications-model")
 const Food = require("../../../models/food-model")
+const Cart = require("../../../models/cart-model")
 const User = require("../../../models/user-model")
 const { USER_TYPES } = require("../../../constants/user/user-constants")
 
@@ -9,7 +10,8 @@ module.exports = {
         let finalResult = {
             message: "Internal error occured.",
             status: false,
-            data: []
+            data: [],
+            cartEntry: []
         };
 
         try {
@@ -18,6 +20,15 @@ module.exports = {
                 { "foodItems._id": foodId },
                 { "foodItems.$": 1 } // Only return the matched food item
             );
+
+            const cartItem = await Cart.findOne(
+                { "foodItems.foodId": foodId },
+                { "foodItems.$": 1 } // Only return the matched cart item
+            );
+
+            if (cartItem) {
+                finalResult.cartEntry = cartItem.foodItems[0];
+            }
 
             if (!result) {
                 finalResult.message = "Food item not found."

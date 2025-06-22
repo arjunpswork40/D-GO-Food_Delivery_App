@@ -15,6 +15,9 @@ const resetPasswordValidator = [
     body('otp')
         .isLength({ min: 6, max: 6 })
         .withMessage('OTP must be 6 characters long'),
+    body('role')
+        .notEmpty().withMessage('Role is required.')
+        .isIn(['owner', 'delivery_partner', 'customer']).withMessage('Unidefined role.'),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {

@@ -424,6 +424,17 @@ module.exports = {
             const paginatedOrders =  totalOrders.slice(startIndex, endIndex);  // Slice the array
             finalResult.orders = paginatedOrders;
 
+            const totalPages = Math.ceil(totalOrders / limit);
+
+            const paginationObject =  {
+                currentPage: page,
+                limit,
+                totalItems: totalOrders.length,
+                totalPages,
+            }
+
+            finalResult.pagination = paginationObject;
+
             return finalResult;
             
         } catch(error) {

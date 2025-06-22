@@ -4,7 +4,7 @@ const customerRegistrationValidator = [
     // Customer Details Validation
     body('name')
         .notEmpty().withMessage('Customer name is required.')
-        .isLength({ min: 3 }).withMessage('Customer name must be at least 3 characters long.'),
+        .isLength({ min: 1, max: 60 }).withMessage('Customer name must be between 1 and 60 characters long  '),
     body('email')
         .notEmpty().withMessage('Email is required.')
         .isEmail().withMessage('Invalid email format.'),
