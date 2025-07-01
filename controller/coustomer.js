@@ -274,7 +274,7 @@ class customerController {
       let allRestaurantsNearBy = [];
       let popularBrands = [];
       try {
-        if (user.customerDetails.currentLocation.coordinates) {
+        if (user?.customerDetails.currentLocation.coordinates) {
           // fetching hotel by priority index, location and rating
           topPicks = await getNearByHotelsWithPaginationAndCurrentLocation(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit)
 
