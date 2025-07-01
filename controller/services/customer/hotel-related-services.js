@@ -540,13 +540,13 @@ module.exports = {
                 const pipeline = [];
 
                 // Conditionally add $geoNear stage if customerLocation.coordinates is provided
-                if (customerLocation.coordinates.length > 0) {
+                if (customerLocation?.coordinates?.length > 0) {
                     pipeline.push({
                         $geoNear: {
                             near: {
                                 $geometry: {
                                     type: "Point",
-                                    coordinates: customerLocation.coordinates, // [longitude, latitude]
+                                    coordinates: customerLocation?.coordinates, // [longitude, latitude]
                                 },
                             },
                             distanceField: "distance", // Field to store the calculated distance

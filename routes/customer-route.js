@@ -107,13 +107,13 @@ router.post(
 )
 router.get(
     "/offers/:page/:limit",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.getOffers
 )
 
 router.get(
     "/offer/:offerId",
-    auth.decodeToken,
+    // auth.decodeToken,
     controller.getOfferById
 )
 
