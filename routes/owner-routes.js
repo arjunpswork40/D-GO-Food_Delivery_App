@@ -73,11 +73,11 @@ const uploadFields = uploads.fields([
 //     controller.userProfile
 // )
 
-router.delete(
-  "/:id",
-  auth.decodeToken,
-  controller.deleteUser
-)
+// router.delete(
+//   "/:id",
+//   auth.decodeToken,
+//   controller.deleteUser
+// )
 
 router.post(
   "/bank-details",
@@ -151,6 +151,11 @@ router.post(
   "/reset-password",
   resetPasswordValidator,
   controller.resetPassword
+)
+router.delete(
+    "/delete-account",
+    auth.decodeToken,
+    controller.deActivateAccount
 )
 
 router.get(

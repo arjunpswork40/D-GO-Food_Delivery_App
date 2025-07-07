@@ -583,7 +583,7 @@ class controller {
                 return res.status(400).json(makeJsonResponse('Bad Request', {}, { message: "Please input all details" }, 400, false));
             }
 
-            const user = await User.findOne({ "email": email, role: "owner" })
+            const user = await User.findOne({ "email": email, role: "owner",  status: { $in: ["pending", "approved"] } })
 
             if (!user) {
                 return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "This user doesn't exists" }, 401, false));
@@ -611,7 +611,7 @@ class controller {
                 return res.status(400).json(makeJsonResponse('Bad Request', {}, { message: "Please input all details" }, 400, false));
             }
 
-            const user = await User.findOne({ "email": email, role: "customer" })
+            const user = await User.findOne({ "email": email, role: "customer", status: { $in: ["pending", "approved"] }})
 
             if (!user) {
                 return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "This user doesn't exists" }, 401, false));
@@ -639,7 +639,7 @@ class controller {
                 return res.status(400).json(makeJsonResponse('Bad Request', {}, { message: "Please input all details" }, 400, false));
             }
 
-            const user = await User.findOne({ "email": email, role: "delivery_partner" })
+            const user = await User.findOne({ "email": email, role: "delivery_partner", status: { $in: ["pending", "approved"] } })
             
             if (!user) {
                 return res.status(401).json(makeJsonResponse('Authentication Error', {}, { message: "This user doesn't exists" }, 401, false));

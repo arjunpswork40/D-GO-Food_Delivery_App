@@ -93,7 +93,28 @@ class deliveryPartner {
             return res.status(500).json(makeJsonResponse('Internal Error5', {}, { message: error.message || "Internal error occurred" }, 500, false));
           }
         }
+       static async deActivateAccountDP(req, res, next) {
+        console.log("deActivateAccount called")
+          try {
+            
+            const user = req.user;
+            const userDB = await User.findById(user._id).select('status customerDetails').exec();
+            if (!userDB) {
+              return res.status(404).json(makeJsonResponse('Failed', {}, { message: "User not found" }, 404, false));
+            }
       
+            userDB.status = 'deleted';
+            await userDB.save();
+            const accountDetails = { status: userDB.status, userId: userDB._id };
+      
+            return res.status(200).json(makeJsonResponse('Success', { ...accountDetails }, {}, 200, true));
+      
+          } catch (error) {
+            console.log(error)
+            console.error(`Error foods:12 ${error.code} - ${error.message}`);
+            return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+          }
+        }
         static async resetPassword(req, res, next) {
           const { email, otp, newPassword, role } = req.body;
           try {

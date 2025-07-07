@@ -27,8 +27,13 @@ class authorisation {
         try {
             const decoded = jwt.verify(token, TOKEN_KEY)
             console.log({"email": decoded.email,"role":decoded.role});
-            
-            const user = await User.findOne({"email": decoded.email,"role":decoded.role})
+
+            const user = await User.findOne({
+                email: decoded.email,
+                role: decoded.role,
+                status: { $in: ["pending", "approved"] }
+            })
+
             if (!user) {
                 let response = makeJsonResponse(`User Doesnt't Exist`, {}, {message: "User Doesnt't Exist"}, 401, false);
                 return await res.status(401).json(response);
@@ -41,6 +46,7 @@ class authorisation {
             next()
             
         } catch (error) {
+            console.log(error);
             let message = 'Verification failed';
             if (error.name === "TokenExpiredError") {
                 message = 'Token has expired';

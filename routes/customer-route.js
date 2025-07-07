@@ -58,6 +58,11 @@ router.get(
     auth.decodeToken,
     controller.accountDetails
 )
+router.delete(
+    "/delete-account",
+    auth.decodeToken,
+    controller.deActivateAccount
+)
 
 router.post(
     "/address",

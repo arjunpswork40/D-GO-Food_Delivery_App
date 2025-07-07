@@ -50,7 +50,11 @@ router.post(
     auth.decodeToken,
     paymentController.getStripeAccountUpdateLink
 )
-
+router.delete(
+    "/delete-account",
+    auth.decodeToken,
+    controller.deActivateAccountDP
+)
 router.post(
     "/delete-stripe-account",
     auth.decodeToken,
