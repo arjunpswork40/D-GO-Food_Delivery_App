@@ -9,6 +9,8 @@ const foodModel = require("../models/food-model");
 const { getHomeDetailsWithOrderData } = require("./services/owner/home-details-service");
 const { getAllFoodList,getAvailableAllFoodList,getUnAvailableAllFoodList,removeFoodItemByOwnerAction } = require("./services/food/food-service");
 const nodemailer = require("nodemailer");
+const Cart = require("../models/cart-model");
+const Order = require("../models/order-model");
 
 
 // Nodemailer setup
@@ -449,25 +451,63 @@ class Owner {
     }
 
      static async deActivateAccount(req, res, next) {
-        try {
+        // try {
           
-          const user = req.user;
-          console.log(user)
-          const userDB = await userModel.findById(user._id).select('status customerDetails').exec();
-          if (!userDB) {
-            return res.status(404).json(makeJsonResponse('Failed', {}, { message: "User not found" }, 404, false));
-          }
+        //   const user = req.user;
+        //   console.log(user)
+        //   const userDB = await userModel.findById(user._id).select('status customerDetails').exec();
+        //   if (!userDB) {
+        //     return res.status(404).json(makeJsonResponse('Failed', {}, { message: "User not found" }, 404, false));
+        //   }
     
-          userDB.status = 'deleted';
-          await userDB.save();
-          const accountDetails = { status: userDB.status, userId: userDB._id };
+        //   userDB.status = 'deleted';
+        //   await userDB.save();
+        //   const accountDetails = { status: userDB.status, userId: userDB._id };
     
-          return res.status(200).json(makeJsonResponse('Success', { ...accountDetails }, {}, 200, true));
+        //   return res.status(200).json(makeJsonResponse('Success', { ...accountDetails }, {}, 200, true));
     
-        } catch (error) {
-          console.log(error)
-          console.error(`Error foods:12 ${error.code} - ${error.message}`);
-          return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+        // } catch (error) {
+        //   console.log(error)
+        //   console.error(`Error foods:12 ${error.code} - ${error.message}`);
+        //   return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
+        // }
+
+        const user = req.user;
+
+        // Validate if the ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(user._id)) {
+            return res.status(400).json(makeJsonResponse('Validation Error', {}, { message: "Please give a valid ID" }, 400, false));
+        }
+
+        try {
+            // Fetch the user by id and check if the role is 'owner'
+            const owner = await User.findOne({ _id: user._id, role: 'owner' }, "_id").lean();
+
+
+            // Check if the user exists
+            if (!owner) {
+                return res.status(404).json(makeJsonResponse('User not found', {}, { message: "No user found with the provided ID" }, 404, false));
+            }
+
+
+            // Perform the deletion
+            const deletedUser = await User.findByIdAndDelete(owner._id);
+            // Delete cart data for this user
+            await Cart.deleteMany({ userId: owner._id });
+
+            await Order.deleteMany({ userId: owner._id });
+
+            // Check if the deletion was successful
+            if (!deletedUser) {
+                return res.status(500).json(makeJsonResponse('Error', {}, { message: "Failed to delete the user" }, 500, false));
+            }
+
+            // Send success response
+            return res.status(200).json(makeJsonResponse('User deleted', { message: "User has been successfully deleted" }, {}, 200, false));
+
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(makeJsonResponse('Server Error', {}, { message: "An error occurred while deleting the user" }, 500, false));
         }
       }
 

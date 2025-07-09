@@ -7,6 +7,8 @@ const { makeJsonResponse } = require("../utils/response");
 const mongoose = require("mongoose");
 const { BCRYPT_SALT } = require("../config/index");
 const bcrypt = require("bcrypt");
+const Cart = require("../models/cart-model");
+const Order = require("../models/order-model");
 
 const {
   getNearByHotelsWithPaginationAndCurrentLocation,
@@ -248,25 +250,43 @@ class customerController {
   }
 
    static async deActivateAccount(req, res, next) {
-    try {
-      
-      const user = req.user;
-      const userDB = await userModel.findById(user._id).select('status customerDetails').exec();
-      if (!userDB) {
-        return res.status(404).json(makeJsonResponse('Failed', {}, { message: "User not found" }, 404, false));
-      }
+     const user = req.user;
 
-      userDB.status = 'deleted';
-      await userDB.save();
-      const accountDetails = { status: userDB.status, userId: userDB._id };
+        // Validate if the ID is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(user._id)) {
+            return res.status(400).json(makeJsonResponse('Validation Error', {}, { message: "Please give a valid ID" }, 400, false));
+        }
 
-      return res.status(200).json(makeJsonResponse('Success', { ...accountDetails }, {}, 200, true));
+        try {
+            // Fetch the user by id and check if the role is 'customer'
+            const customer = await User.findOne({ _id: user._id, role: 'customer' }, "_id").lean();
 
-    } catch (error) {
-      console.log(error)
-      console.error(`Error foods:12 ${error.code} - ${error.message}`);
-      return res.status(500).json(makeJsonResponse('Internal Error2', {}, { message: error.message || "Internal error occurred" }, 500, false));
-    }
+
+            // Check if the user exists
+            if (!customer) {
+                return res.status(404).json(makeJsonResponse('User not found', {}, { message: "No user found with the provided ID" }, 404, false));
+            }
+
+
+            // Perform the deletion
+            const deletedUser = await User.findByIdAndDelete(customer._id);
+            // Delete cart data for this user
+            await Cart.deleteMany({ userId: customer._id });
+
+            await Order.deleteMany({ userId: customer._id });
+
+            // Check if the deletion was successful
+            if (!deletedUser) {
+                return res.status(500).json(makeJsonResponse('Error', {}, { message: "Failed to delete the user" }, 500, false));
+            }
+
+            // Send success response
+            return res.status(200).json(makeJsonResponse('User deleted', { message: "User has been successfully deleted" }, {}, 200, false));
+
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json(makeJsonResponse('Server Error', {}, { message: "An error occurred while deleting the user" }, 500, false));
+        }
   }
 
 
