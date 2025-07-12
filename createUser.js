@@ -24,7 +24,6 @@ async function adminUser(name, password, email, role) {
     }
 }
 
-
 async function normalUser(name, password, email) {
     try {
         let unhashPassword = password
