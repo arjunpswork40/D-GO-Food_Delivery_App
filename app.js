@@ -8,9 +8,10 @@ const { PORT } = process.env
 const { makeJsonResponse } = require("./utils/response");
 const path = require('path');
 const Stripe = require("stripe");
+const cors = require("cors");
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 require("./cron/payoutScheduler");
-
+app.use(cors());
 // app.post(
 //   "/payment/stripe-payment-status-webhook",
 //   express.raw({ type: "application/json" }),

@@ -128,5 +128,11 @@ router.get(
     controller.customerprofile
 )
 
+router.get(
+    "/food-under-category/:categoryId",
+    // auth.decodeToken,
+    controller.getFoodByCategory
+)
+
 
 module.exports = router

@@ -451,10 +451,45 @@ static async getDashboardCount(req, res, next) {
 
 static async DashboardRecentSales(req, res, next) {
   try {
-    const orders = await orderModel.find().sort({ createdAt: -1 }).limit(10);
+    // const orders = await orderModel.find().sort({ createdAt: -1 }).limit(10);
+
+    const orders = await orderModel
+                  .find()
+                  .sort({ createdAt: -1 })
+                  .limit(10)
+                  .populate({
+                      path: 'restaurantId',
+                      select: 'hotelDetails.name', // Only fetch restaurant name
+                  })
+                  .populate({
+                      path: 'customerId',
+                      select: 'name', // Only fetch customer name
+                  })
+                  .select('_id totalAmount paidThrough status restaurantId customerId');
+    
+    let result = [];
+
+    orders.forEach(order => {
+      const restaurantName = order.restaurantId?.hotelDetails?.name;
+      const customerName = order.customerId?.name;
+      const totalAmount = order.totalAmount;
+      const paidThrough = order.paidThrough;
+      const status = order.status;
+      const _id = order._id;
+
+      result.push({
+          restaurantName,
+          customerName,
+          totalAmount,
+          paidThrough,
+          status,
+          _id
+      });
+    });
+
     res.status(200).json({
       status: true,
-      data: orders
+      data: result
     });
   } catch (err) {
     res.status(500).json({ status: false, error: err.message });
@@ -504,7 +539,10 @@ static async getBestSellingRestaurants(req, res, next) {
           name: "$restaurantDetails.name",
           email: "$restaurantDetails.email",
           phone: "$restaurantDetails.phone",
-          profile_image: "$restaurantDetails.profile_image"
+          hotel_main_image:{
+                              $arrayElemAt: ["$restaurantDetails.hotelDetails.images.hotelMainImage", 0]
+                            },
+          hotel_name: "$restaurantDetails.hotelDetails.name"
         }
       }
     ]);
@@ -520,6 +558,82 @@ static async getBestSellingRestaurants(req, res, next) {
   }
 }
 
+static async getSalesOverview(req, res, next) {
+  try {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const lastYear = currentYear - 1;
+
+    const results = await orderModel.aggregate([
+      {
+        $match: {
+          orderDate: { $exists: true },
+          status: { $ne: 'ORDER_CANCELLED' },
+          orderDate: {
+            $gte: new Date(`${lastYear}-01-01`),
+            $lte: new Date(`${currentYear}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$orderDate' },
+            month: { $month: '$orderDate' }
+          },
+          totalSales: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    // Initialize blank data arrays for both years
+    const monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const lastYearData = new Array(12).fill(0);
+    const currentYearData = new Array(12).fill(0);
+
+    results.forEach((entry) => {
+      const monthIndex = entry._id.month - 1;
+      if (entry._id.year === lastYear) {
+        lastYearData[monthIndex] = entry.totalSales;
+      } else if (entry._id.year === currentYear) {
+        currentYearData[monthIndex] = entry.totalSales;
+      }
+    });
+    const data = {
+      labels: monthLabels,
+      datasets: [
+        {
+          label: 'Last Year',
+          data: lastYearData,
+          fill: false,
+            backgroundColor: '#2f4860',
+            borderColor: '#2f4860',
+            tension: 0.4
+        },
+        {
+          label: 'Current Year',
+          data: currentYearData,
+          fill: false,
+            backgroundColor: '#00bb7e',
+            borderColor: '#00bb7e',
+            tension: 0.4
+        }
+      ]
+    }
+    res.status(200).json({
+      status: true,
+      data: data
+    });
+
+  } catch (err) {
+    console.error("Sales Overeview Error:", err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+}
 
 }
 

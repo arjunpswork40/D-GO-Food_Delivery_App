@@ -9,6 +9,7 @@ const { BCRYPT_SALT } = require("../config/index");
 const bcrypt = require("bcrypt");
 const Cart = require("../models/cart-model");
 const Order = require("../models/order-model");
+const FoodMainCategory = require("../models/food-main-category")
 
 const {
   getNearByHotelsWithPaginationAndCurrentLocation,
@@ -303,12 +304,68 @@ class customerController {
     }
   }
 
+  static async getFoodByCategory(req, res, next) {
+    try {
+      const { categoryId } = req.params;
+      const { page = 1, limit = 10 } = req.query;
+
+              // 1. Fetch the category name using the ID
+        const categoryDoc = await FoodMainCategory.findById(categoryId);
+        if (!categoryDoc) {
+            return res.status(404).json({ message: "Category not found" });
+        }
+        const categoryName = categoryDoc.name;
+
+        // 2. Calculate pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+         // 3. Aggregate foodItems matching the category name
+        const results = await Food.aggregate([
+            { $unwind: "$foodItems" },  // Unwind foodItems array
+            { $match: { "foodItems.category": categoryName } },
+            {
+                $lookup: {
+                    from: "users", // collection name of the User model
+                    localField: "hotelId", // field in Food
+                    foreignField: "_id", // field in User
+                    as: "userData"
+                }
+            },
+             { $unwind: "$userData" }, 
+            {
+                $project: {
+                    _id: 0,
+                    hotelId: 1,
+                    foodItem: "$foodItems",
+                    user: {
+                        userName: "$userData.name", // adjust according to fields in User
+                        email: "$userData.email",
+                        phone: "$userData.phone",
+                        restaurantName: "$userData.hotelDetails.name"
+                    }
+                }
+            },
+            { $skip: skip },
+            { $limit: parseInt(limit) }
+        ]);
+
+
+      return res.status(200).json(makeJsonResponse('Food items under ' + categoryName, { results }, {}, 200, true));
+    } catch (error) {
+      console.error(`getFoodByCategory:2 ${error.code} - ${error.message}`);
+      return res.status(500).json(makeJsonResponse('getFoodByCategory', {}, { message: error.message || "getFoodByCategory" }, 500, false));
+    }
+  }
+
   static async getHomeDetails(req, res, next) {
     const page = Number(req.params.page || 1);
     const limit = Number(req.params.limit || 10);
-
+    const lat = parseFloat(req.query.lat ?? 38.7169);  // Lisbon's latitude
+    const lng = parseFloat(req.query.lng ?? -9.1399); // Lisbon's longitude
+    console.log(`Page: ${page}, Limit: ${limit}, Lat: ${lat}, Lng: ${lng}`);
     try {
       const user = req.user;
+      console.log("Loc:::=>",user?.customerDetails.currentLocation.coordinates)
       const applicationDetails = await getApplicationBasicDetails();
       const serviceCategoryDetails = await getServiceCategoryDetails();
       const maxDistance = process.env.NEAR_BY_MAX_DISTANCE || "5000";
@@ -325,6 +382,11 @@ class customerController {
 
           popularBrands = await getPopularBrands(user.customerDetails.currentLocation.coordinates, Number(maxDistance), page, limit);
 
+        } else {
+          // If no current location is set, fetch all hotels without location filter
+          topPicks = await getNearByHotelsWithPaginationAndCurrentLocation([lng,lat], Number(maxDistance), page, limit);
+          allRestaurantsNearBy = await getAllNearByHotels([lng,lat], Number(maxDistance), page, limit);
+          popularBrands = await getPopularBrands([lng,lat], Number(maxDistance), page, limit);
         }
       } catch (err) {
         console.error("Error finding nearby hotels:", err);
