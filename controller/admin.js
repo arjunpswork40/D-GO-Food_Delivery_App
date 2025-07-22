@@ -6,6 +6,7 @@ const Admin = require("../models/admin-model")
 const { makeJsonResponse } = require("../utils/response")
 const passAuth = require("../middleware/passwordHash-middleware")
 const auth = require("../middleware/auth-middleware")
+const orderModel = require("../models/order-model")
 
 class controller {
   static async login(req, res, next) {
@@ -207,7 +208,436 @@ class controller {
   }
 
 
+
+static async getAllUsers(req, res, next) {
+  try {
+    const page = parseInt(req.query.page) || 1;       // current page
+    const limit = parseInt(req.query.limit) || 10;    // items per page
+    const role = req.query.role;
+    const skip = (page - 1) * limit;
+
+    //validate role
+    if (!role) {
+      return res.status(400).json({ status: false, error: "Role is required" });
+    }
+    
+    if (role && !["customer", "owner", "delivery_partner"].includes(role)) {
+      return res.status(400).json({ status: false, error: "Invalid role" });
+    }
+
+    const [customers, total] = await Promise.all([
+      User.find({ role: "customer" }).skip(skip).limit(limit),
+      User.countDocuments({ role: "customer" })
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    res.status(200).json({
+      status: true,
+      data: customers,
+      meta: {
+        total,
+        page,
+        totalPages,
+        limit
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
 }
+
+  //cutomer crud
+
+static async getUser(req, res, next) {
+  try {
+    const customer = await User.findById(req.params.id);
+    res.status(200).json({ status: true, data: customer });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+};
+
+static async createUser(req, res, next) {
+  try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+      address,
+      role = 'customer',
+      customerDetails,
+      hotelDetails,
+      deliveryPartnerDetails,
+    } = req.body;
+
+    // Validate role
+    const validRoles = ['customer', 'owner', 'delivery_partner'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({ status: false, error: "Invalid role" });
+    }
+
+    // Check required fields
+    if (!name || !email || !password || !phone) {
+      return res.status(400).json({ status: false, error: "Name, email, phone, and password are required" });
+    }
+
+    // Check for existing email or phone
+    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
+    if (existingUser) {
+      return res.status(400).json({ status: false, error: "Email or phone already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await passAuth.hashPassword(password);
+
+    // Prepare data based on role
+    const userData = {
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      address,
+      role,
+    };
+
+    if (role === 'customer') {
+      userData.customerDetails = customerDetails;
+    } else if (role === 'owner') {
+      userData.hotelDetails = hotelDetails;
+    } else if (role === 'delivery_partner') {
+      userData.deliveryPartnerDetails = deliveryPartnerDetails;
+    }
+
+    const newUser = new User(userData);
+    await newUser.save();
+
+    res.status(201).json({
+      status: true,
+      message: `${role} created successfully`,
+      data: newUser,
+    });
+  } catch (err) {
+    res.status(400).json({ status: false, error: err.message });
+  }
+}
+
+
+static async updateUser(req, res, next) {
+  try {
+    const userId = req.params.id;
+    const updateData = req.body;
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ status: false, error: "Request body is empty" });
+    }
+
+    // Fetch existing user
+    const existingUser = await User.findById(userId);
+    if (!existingUser) {
+      return res.status(404).json({ status: false, error: "User not found" });
+    }
+
+    // Prevent role update
+    if (updateData.role && updateData.role !== existingUser.role) {
+      return res.status(400).json({ status: false, error: "Role cannot be changed" });
+    }
+
+    // Email uniqueness check (if email is updated)
+    if (updateData.email && updateData.email !== existingUser.email) {
+      const emailExists = await User.findOne({ email: updateData.email });
+      if (emailExists) {
+        return res.status(400).json({ status: false, error: "Email already exists" });
+      }
+    }
+
+    // Phone uniqueness check (if phone is updated)
+    if (updateData.phone && updateData.phone !== existingUser.phone) {
+      const phoneExists = await User.findOne({ phone: updateData.phone });
+      if (phoneExists) {
+        return res.status(400).json({ status: false, error: "Phone number already exists" });
+      }
+    }
+
+    // Hash password if provided
+    if (updateData.password) {
+      updateData.password = await passAuth.hashPassword(updateData.password);
+    }
+
+    // Only update details relevant to the role
+    if (existingUser.role === 'customer') {
+      updateData.customerDetails = updateData.customerDetails || existingUser.customerDetails;
+      delete updateData.hotelDetails;
+      delete updateData.deliveryPartnerDetails;
+    } else if (existingUser.role === 'owner') {
+      updateData.hotelDetails = updateData.hotelDetails || existingUser.hotelDetails;
+      delete updateData.customerDetails;
+      delete updateData.deliveryPartnerDetails;
+    } else if (existingUser.role === 'delivery_partner') {
+      updateData.deliveryPartnerDetails = updateData.deliveryPartnerDetails || existingUser.deliveryPartnerDetails;
+      delete updateData.customerDetails;
+      delete updateData.hotelDetails;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    res.status(200).json({
+      status: true,
+      message: `${existingUser.role} updated successfully`,
+      data: updatedUser,
+    });
+
+  } catch (err) {
+    res.status(400).json({ status: false, error: err.message });
+  }
+}
+
+static async getDashboardCount(req, res, next) {
+  try {
+
+    const result = [
+      {
+        "label" : "Orders",
+        "value" : await orderModel.countDocuments(),
+        "sub_label" : null
+      },
+      {
+        "label" : "Users",
+        "value" : await User.countDocuments({
+          "role" :"customer"
+        }),
+        "sub_label" : null
+      },
+      {
+        "label" : "Hotels",
+        "value" : await User.countDocuments({
+          "role" :"owner"
+        }),
+        "sub_label" : null
+      }
+    ];
+
+    const revenue = await orderModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
+
+    //appen revenue in 2nd index of result
+    if (revenue.length > 0) {
+      result.splice(1, 0, {
+        "label" : "Revenue",
+        "value" : revenue[0].totalAmount,
+        "sub_label" : null
+      });
+    }
+
+    res.status(200).json({
+      status: true,
+      data: result
+    });
+
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+}
+
+static async DashboardRecentSales(req, res, next) {
+  try {
+    // const orders = await orderModel.find().sort({ createdAt: -1 }).limit(10);
+
+    const orders = await orderModel
+                  .find()
+                  .sort({ createdAt: -1 })
+                  .limit(10)
+                  .populate({
+                      path: 'restaurantId',
+                      select: 'hotelDetails.name', // Only fetch restaurant name
+                  })
+                  .populate({
+                      path: 'customerId',
+                      select: 'name', // Only fetch customer name
+                  })
+                  .select('_id totalAmount paidThrough status restaurantId customerId');
+    
+    let result = [];
+
+    orders.forEach(order => {
+      const restaurantName = order.restaurantId?.hotelDetails?.name;
+      const customerName = order.customerId?.name;
+      const totalAmount = order.totalAmount;
+      const paidThrough = order.paidThrough;
+      const status = order.status;
+      const _id = order._id;
+
+      result.push({
+          restaurantName,
+          customerName,
+          totalAmount,
+          paidThrough,
+          status,
+          _id
+      });
+    });
+
+    res.status(200).json({
+      status: true,
+      data: result
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, error: err.message });
+  }
+
+}
+
+
+static async getBestSellingRestaurants(req, res, next) {
+  try {
+    const topRestaurants = await orderModel.aggregate([
+      {
+        $match: {
+          restaurantId: { $ne: null }  // Exclude orders without a restaurant
+        }
+      },
+      {
+        $group: {
+          _id: "$restaurantId",
+          totalSales: { $sum: "$totalAmount" },
+          orderCount: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { totalSales: -1 } // Sort by revenue
+      },
+      {
+        $limit: 5 // Top 5 restaurants (change as needed)
+      },
+      {
+        $lookup: {
+          from: "users", // collection name must match MongoDB's collection name (usually lowercase)
+          localField: "_id",
+          foreignField: "_id",
+          as: "restaurantDetails"
+        }
+      },
+      {
+        $unwind: "$restaurantDetails"
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: "$_id",
+          totalSales: 1,
+          orderCount: 1,
+          name: "$restaurantDetails.name",
+          email: "$restaurantDetails.email",
+          phone: "$restaurantDetails.phone",
+          hotel_main_image:{
+                              $arrayElemAt: ["$restaurantDetails.hotelDetails.images.hotelMainImage", 0]
+                            },
+          hotel_name: "$restaurantDetails.hotelDetails.name"
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      status: true,
+      data: topRestaurants
+    });
+
+  } catch (err) {
+    console.error("Best Selling Restaurant Error:", err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+}
+
+static async getSalesOverview(req, res, next) {
+  try {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const lastYear = currentYear - 1;
+
+    const results = await orderModel.aggregate([
+      {
+        $match: {
+          orderDate: { $exists: true },
+          status: { $ne: 'ORDER_CANCELLED' },
+          orderDate: {
+            $gte: new Date(`${lastYear}-01-01`),
+            $lte: new Date(`${currentYear}-12-31`)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$orderDate' },
+            month: { $month: '$orderDate' }
+          },
+          totalSales: { $sum: '$totalAmount' }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    // Initialize blank data arrays for both years
+    const monthLabels = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const lastYearData = new Array(12).fill(0);
+    const currentYearData = new Array(12).fill(0);
+
+    results.forEach((entry) => {
+      const monthIndex = entry._id.month - 1;
+      if (entry._id.year === lastYear) {
+        lastYearData[monthIndex] = entry.totalSales;
+      } else if (entry._id.year === currentYear) {
+        currentYearData[monthIndex] = entry.totalSales;
+      }
+    });
+    const data = {
+      labels: monthLabels,
+      datasets: [
+        {
+          label: 'Last Year',
+          data: lastYearData,
+          fill: false,
+            backgroundColor: '#2f4860',
+            borderColor: '#2f4860',
+            tension: 0.4
+        },
+        {
+          label: 'Current Year',
+          data: currentYearData,
+          fill: false,
+            backgroundColor: '#00bb7e',
+            borderColor: '#00bb7e',
+            tension: 0.4
+        }
+      ]
+    }
+    res.status(200).json({
+      status: true,
+      data: data
+    });
+
+  } catch (err) {
+    console.error("Sales Overeview Error:", err);
+    res.status(500).json({ status: false, error: err.message });
+  }
+}
+
+}
+
+
 
 
 module.exports = controller

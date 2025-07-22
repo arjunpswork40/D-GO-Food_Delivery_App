@@ -117,10 +117,13 @@ class authorisation {
     static async isAdmin(req, res, next) {
         try {
             const user = req.user.role
-            if (user == "admin") {
-               return next()
+            if (user == "admin" || user == "super_admin" || user == "sub_admin") {
+                return next()
             }
-            return res.status(401).json("Authorization Required, please see you have the right authorization.")
+            const message="Authorization Required, please see you have the right authorization"
+            let response = makeJsonResponse(`Authorization Required, please see you have the right authorization`, {}, {message}, 401, false);
+            return await res.status(401).json(response);
+
         } catch (error) {
             next(error)
         }
