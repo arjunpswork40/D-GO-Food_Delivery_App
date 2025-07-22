@@ -350,7 +350,7 @@ class customerController {
         ]);
 
 
-      return res.status(200).json(makeJsonResponse('Food items under ' + categoryName, { results }, {}, 200, true));
+      return res.status(200).json(makeJsonResponse('Food items under ' + categoryName, { results,currentPage: parseInt(page),limit: parseInt(limit) }, {}, 200, true));
     } catch (error) {
       console.error(`getFoodByCategory:2 ${error.code} - ${error.message}`);
       return res.status(500).json(makeJsonResponse('getFoodByCategory', {}, { message: error.message || "getFoodByCategory" }, 500, false));
