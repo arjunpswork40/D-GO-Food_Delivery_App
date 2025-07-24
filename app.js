@@ -50,6 +50,7 @@ app.use(
 
 app.use("/", require("./routes/index"))
 app.use('/uploads/hotel', express.static(path.join(__dirname, 'uploads/hotel')));
+app.use('/uploads/food', express.static(path.join(__dirname, 'uploads/food')));
 // Route to serve an HTML file
 app.get("/privacy-policy", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "privacy-policy.html"));
