@@ -4,11 +4,11 @@ const foodMainCategory = require("../../../models/food-main-category");
 const offer = require("../../../models/offer");
 const serviceCategoryModel = require("../../../models/serviceCategory-model");
 const userModel = require("../../../models/user-model");
-const {OWNER} = require("../../../utils/userRoles")
+const { OWNER } = require("../../../utils/userRoles")
 module.exports = {
     getNearByHotelsWithPaginationAndCurrentLocation: async (userLocation, maxDistance, page, limit) => {
         try {
-            
+
             const options = {
                 skip: (page - 1) * limit,
                 limit: Number(limit)
@@ -80,7 +80,7 @@ module.exports = {
     },
     getAllNearByHotels: async (userLocation, maxDistance, page, limit) => {
         try {
-            
+
             const skip = (page - 1) * limit;
 
             const nearbyHotels = await userModel.aggregate([
@@ -181,9 +181,9 @@ module.exports = {
     getAddsByCount: async (count) => {
         try {
             const addsByCount = await addsModel.find({})
-                                               .sort({createdAt: -1})
-                                               .limit(count || 10)
-                                               .select("images type tagline");
+                .sort({ createdAt: -1 })
+                .limit(count || 10)
+                .select("images type tagline");
             return addsByCount;
         } catch (err) {
             console.error("Error getAddsByCount (from service file):", err);
@@ -193,9 +193,9 @@ module.exports = {
     getMainFoodCategoryListByCount: async (count) => {
         try {
             const mainFoodCategoryByCountData = await foodMainCategory.find({})
-                                               .sort({createdAt: -1})
-                                               .limit(count || 10)
-                                               .select("name description images");
+                .sort({ createdAt: -1 })
+                .limit(count || 10)
+                .select("name description images");
             return mainFoodCategoryByCountData;
         } catch (err) {
             console.error("Error getMainFoodCategoryListByCount (from service file):", err);
@@ -262,7 +262,7 @@ module.exports = {
                     },
                 },
             ]);
-            
+
             return spotlights;
         } catch (err) {
             console.error("Error getSpotlights (from service file):", err);
@@ -270,7 +270,7 @@ module.exports = {
         }
     },
     getPopularBrands: async (userLocation, maxDistance, page, limit) => {
-        try {   
+        try {
             const skip = (page - 1) * limit;
 
             const nearbyHotels = await userModel.aggregate([
@@ -335,20 +335,20 @@ module.exports = {
             const query = {
                 role: OWNER,
             };
-    
+
             const options = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
             };
 
             let offersData = await offer.find()
-                                        .skip(options.skip)
-                                        .limit(options.limit)
-                                        .select("deductionAmount name ownerId mainOffer tag_line")
-                                        .populate("ownerId", "name hotelDetails.name hotelDetails.description hotelDetails.images.hotelMainImage");
+                .skip(options.skip)
+                .limit(options.limit)
+                .select("deductionAmount name ownerId mainOffer tag_line")
+                .populate("ownerId", "name hotelDetails.name hotelDetails.description hotelDetails.images.hotelMainImage");
 
             return offersData;
-        } catch(error) {
+        } catch (error) {
             console.error("Error getOfferDetails (from service file):", error);
             return false;
         }
@@ -359,7 +359,7 @@ module.exports = {
             const query = {
                 role: OWNER,
             };
-    
+
             const options = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
@@ -368,7 +368,7 @@ module.exports = {
             let result = await userModel.aggregate([
                 {
                     $match: {
-                        "hotelDetails" : {
+                        "hotelDetails": {
                             $exists: true
                         }
                     } // Ensure documents have hotelDetails.
@@ -385,8 +385,8 @@ module.exports = {
                 {
                     $limit: options.limit // Limit the number of documents per page
                 },
-                { 
-                    $project: { 
+                {
+                    $project: {
                         "hotelDetails.name": 1,
                         "hotelDetails.images.hotelMainImage": 1,
                         "hotelDetails.description": 1,
@@ -395,17 +395,17 @@ module.exports = {
             ]);
 
             return result;
-        } catch(error) {
+        } catch (error) {
             console.error("Error getHighlightedHotels (from service file):", error);
             return false;
         }
     },
 
-    getAccountDetails: async(user, page, limit) => {
+    getAccountDetails: async (user, page, limit) => {
         try {
 
             const userData = await userModel.findById(user._id);
-            
+
             let addressData = userData.customerDetails.savedAddresses;
 
             let finalResult = {
@@ -421,12 +421,12 @@ module.exports = {
 
             const startIndex = (page - 1) * limit; // Calculate the starting index
             const endIndex = startIndex + limit;       // Calculate the ending index
-            const paginatedOrders =  totalOrders.slice(startIndex, endIndex);  // Slice the array
+            const paginatedOrders = totalOrders.slice(startIndex, endIndex);  // Slice the array
             finalResult.orders = paginatedOrders;
 
             const totalPages = Math.ceil(totalOrders / limit);
 
-            const paginationObject =  {
+            const paginationObject = {
                 currentPage: page,
                 limit,
                 totalItems: totalOrders.length,
@@ -436,8 +436,8 @@ module.exports = {
             finalResult.pagination = paginationObject;
 
             return finalResult;
-            
-        } catch(error) {
+
+        } catch (error) {
             console.error("Error getAccountDetails (from service file):", error);
             return false;
         }
@@ -448,7 +448,7 @@ module.exports = {
             const query = {
                 role: OWNER,
             };
-    
+
             const options = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
@@ -509,7 +509,13 @@ module.exports = {
                     "hotelDetails.description": 1,
                     "hotelDetails.images.hotelMainImage": 1,
                     ratings: 1,
-                    orderCount: { $size: "$order" }, // Include order count
+                    orderCount: {
+                        $cond: {
+                            if: { $isArray: "$order" },
+                            then: { $size: "$order" },
+                            else: 0
+                        }
+                    },
                     distance: 1, // Include calculated distance
                 },
             });
@@ -518,7 +524,7 @@ module.exports = {
             const result = await userModel.aggregate(pipeline);
 
             return result;
-        } catch(error) {
+        } catch (error) {
             console.error("Error getHotelByFilter (from service file):", error);
             return false;
         }
@@ -529,126 +535,123 @@ module.exports = {
             const query = {
                 role: OWNER,
             };
-    
+
             const options = {
                 skip: (page - 1) * limit,
                 limit: Number(limit),
             };
-
             const regex = new RegExp(keyword, "i");
             // Initialize the aggregation pipeline
-                const pipeline = [];
+            const pipeline = [];
 
-                // Conditionally add $geoNear stage if customerLocation.coordinates is provided
-                if (customerLocation?.coordinates?.length > 0) {
-                    pipeline.push({
-                        $geoNear: {
-                            near: {
-                                $geometry: {
-                                    type: "Point",
-                                    coordinates: customerLocation?.coordinates, // [longitude, latitude]
-                                },
+            // Conditionally add $geoNear stage if customerLocation.coordinates is provided
+            if (customerLocation.length > 0) {
+                pipeline.push({
+                    $geoNear: {
+                        near: {
+                            type: "Point",
+                            coordinates: customerLocation,
+                        },
+                        distanceField: "distance",
+                        spherical: true,
+                        key: "hotelDetails.location.coordinates",
+                    },
+                });
+            }
+
+            // Add $lookup stage
+            pipeline.push({
+                $lookup: {
+                    from: "foods", // The name of the Food collection
+                    localField: "_id", // The User model's primary key
+                    foreignField: "hotelId", // The field in Food that links to User
+                    as: "foodItems", // Output array name for the joined food items
+                },
+            });
+
+            // Add $unwind stages
+            pipeline.push(
+                { $unwind: "$foodItems" }, // Unwind the foodItems array from $lookup
+                { $unwind: "$foodItems.foodItems" } // Unwind the embedded foodItems array within each food document
+            );
+
+            // Add $facet stage for hotels and foodItems
+            pipeline.push({
+                $facet: {
+                    restaurants: [
+                        {
+                            $match: {
+                                "hotelDetails.name": { $regex: regex },
+                                role: OWNER,
                             },
-                            distanceField: "distance", // Field to store the calculated distance
-                            spherical: true, // Use spherical geometry
-                            key: "hotelDetails.location",
                         },
-                    });
-                }
+                        {
+                            $project: {
+                                _id: "$_id",
+                                restaurantName: "$hotelDetails.name",
+                                restaurantDescription: "$hotelDetails.description",
+                                location: "$hotelDetails.location.coordinates",
+                                images: "$hotelDetails.images.hotelMainImage",
+                                distance: 1, // Include the calculated distance
+                            },
+                        },
+                        { $skip: options.skip }, // Skip documents for pagination
+                        { $limit: options.limit }, // Limit the number of documents
+                    ],
+                    foodItems: [
+                        {
+                            $match: {
+                                "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
+                            },
+                        },
+                        {
+                            $project: {
+                                restaurantId: "$_id",
+                                restaurantName: "$hotelDetails.name",
+                                foodId: "$foodItems.foodItems._id",
+                                foodItemName: "$foodItems.foodItems.name",
+                                foodDescription: "$foodItems.foodItems.description",
+                                price: "$foodItems.foodItems.price",
+                                images: "$foodItems.foodItems.images"
+                            },
+                        },
+                        { $skip: options.skip }, // Skip documents for pagination
+                        { $limit: options.limit }, // Limit the number of documents
+                    ],
+                },
+            });
 
-        // Add $lookup stage
-        pipeline.push({
-            $lookup: {
-                from: "foods", // The name of the Food collection
-                localField: "_id", // The User model's primary key
-                foreignField: "hotelId", // The field in Food that links to User
-                as: "foodItems", // Output array name for the joined food items
-            },
-        });
+            // Execute the aggregation pipeline
+            const results = await userModel.aggregate(pipeline);
 
-        // Add $unwind stages
-        pipeline.push(
-            { $unwind: "$foodItems" }, // Unwind the foodItems array from $lookup
-            { $unwind: "$foodItems.foodItems" } // Unwind the embedded foodItems array within each food document
-        );
-
-        // Add $facet stage for hotels and foodItems
-        pipeline.push({
-            $facet: {
-                restaurants: [
-                    {
-                        $match: {
-                            "hotelDetails.name": { $regex: regex },
-                            role: OWNER,
-                        },
-                    },
-                    {
-                        $project: {
-                            _id: "$_id",
-                            restaurantName: "$hotelDetails.name",
-                            restaurantDescription: "$hotelDetails.description",
-                            location: "$hotelDetails.location",
-                            images: "$hotelDetails.images.hotelMainImage",
-                            distance: 1, // Include the calculated distance
-                        },
-                    },
-                    { $skip: options.skip }, // Skip documents for pagination
-                    { $limit: options.limit }, // Limit the number of documents
-                ],
-                foodItems: [
-                    {
-                        $match: {
-                            "foodItems.foodItems.name": { $regex: regex }, // Match food item names with the keyword
-                        },
-                    },
-                    {
-                        $project: {
-                            restaurantId: "$_id",
-                            restaurantName: "$hotelDetails.name",
-                            foodId: "$foodItems.foodItems._id",
-                            foodItemName: "$foodItems.foodItems.name",
-                            foodDescription: "$foodItems.foodItems.description",
-                            price: "$foodItems.foodItems.price",
-                            images: "$foodItems.foodItems.images"
-                        },
-                    },
-                    { $skip: options.skip }, // Skip documents for pagination
-                    { $limit: options.limit }, // Limit the number of documents
-                ],
-            },
-        });
-
-        // Execute the aggregation pipeline
-        const results = await userModel.aggregate(pipeline);
-    
             return results;
         } catch (error) {
             console.error("Error searchHotelsByKeyword (from service file):", error);
             return false;
         }
     },
-    
-    
+
+
 
     // searchHotelsByKeyword: async (keyword, page, limit, currentLocation) => {
     //     try {
     //         const query = {
     //             role: "owner", // Search only for users with the 'OWNER' role
     //         };
-    
+
     //         const options = {
     //             skip: (page - 1) * limit,
     //             limit: Number(limit),
     //         };
-    
+
     //         const regex = new RegExp(keyword, "i");
-    
+
     //         // MongoDB expects the location as a { type: "Point", coordinates: [longitude, latitude] } format
     //         const location = { 
     //             type: "Point", 
     //             coordinates: currentLocation.coordinates
     //         };
-    
+
     //         const results = await userModel.aggregate([
     //             {
     //                 // First, we add the geoNear stage to calculate distance for hotels
@@ -752,17 +755,17 @@ module.exports = {
     //                 },
     //             },
     //         ]);
-    
+
     //         return results;
     //     } catch (error) {
     //         console.error("Error searchHotelsByKeyword (from service file):", error);
     //         return false;
     //     }
     // },
-    
-    
+
+
     getPopularHotels: async (page, limit) => {
-        
+
         const query = {
             role: OWNER,
         };
@@ -831,10 +834,10 @@ module.exports = {
             // Convert limit and page to numbers to avoid BSON error
             limit = Number(limit); // Ensure limit is a number
             page = Number(page); // Ensure page is a number
-    
+
             // Calculate the number of documents to skip for pagination
             const skip = (page - 1) * limit;
-    
+
             // Fetch offers with the specified user role
             const offersData = await offer.find()
                 .sort({ deductionAmount: -1 }) // Sort by highest deduction amount
@@ -846,20 +849,20 @@ module.exports = {
                     select: 'hotelDetails.name hotelDetails.description hotelDetails.location hotelDetails.images.hotelMainImage role', // Specify fields to include
                 })
                 .lean(); // Optimize query performance
-    
+
             // Filter out offers where no matching user was found (due to role mismatch)
             const filteredOffers = offersData.filter((offer) => offer.ownerId);
-    
+
             // Count total matching offers
             const totalDocuments = await offer.countDocuments()
                 .populate({
                     path: 'ownerId',
                     match: { role: 'owner' },
                 });
-    
+
             // Prepare pagination metadata
             const totalPages = Math.ceil(totalDocuments / limit);
-    
+
             return {
                 currentPage: page,
                 totalPages,
@@ -878,5 +881,5 @@ module.exports = {
             };
         }
     },
-    
+
 }

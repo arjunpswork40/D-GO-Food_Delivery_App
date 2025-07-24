@@ -68,9 +68,10 @@ class customerController {
         page,
         limit,
       } = req.params;
-      const { keyword } = req.query;
+      const { keyword,lat,lng } = req.query;
       const user = req.user;
-      const result = await searchHotelsByKeyword(keyword, page, limit, user?.customerDetails?.currentLocation);
+      console.log("search=>", user?.customerDetails?.currentLocation ?? [parseFloat(lng ?? 38.716), parseFloat(lat ?? -9.1399)])
+      const result = await searchHotelsByKeyword(keyword, page, limit, user?.customerDetails?.currentLocation ?? [parseFloat(lng ?? 38.716), parseFloat(lat ?? -9.1399)]);
 
       return res.status(200).json(makeJsonResponse('Search result', { result }, {}, 200, true));
     } catch (error) {
@@ -109,13 +110,15 @@ class customerController {
         bestSellers,
         sortByRating,
         fastDelivery,
-        sortOrder
+        sortOrder,
+        lat,
+        lng
       } = req.query;
 
       const user = req.user;
-
+      const location = user?.customerDetails?.currentLocation?.coordinates || [parseFloat(lng ?? 38.716), parseFloat(lat ?? -9.1399)];
       let highlightedRestaurants = await getHighlightedHotels(page, limit);
-      let restaurantList = await getHotelByFilter(page, limit, user?.customerDetails?.currentLocation.coordinates, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
+      let restaurantList = await getHotelByFilter(page, limit, location, offersNearYou, bestSellers, fastDelivery, sortByRating, sortOrder);
       let favoriteRestaurantIds = await User.findById(user?._id, "customerDetails.favoriteRestaurants").lean();
       favoriteRestaurantIds = favoriteRestaurantIds?.customerDetails.favoriteRestaurants || [];
       console.log(favoriteRestaurantIds)
