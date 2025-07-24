@@ -70,7 +70,6 @@ class customerController {
       } = req.params;
       const { keyword,lat,lng } = req.query;
       const user = req.user;
-      console.log("search=>", user?.customerDetails?.currentLocation ?? [parseFloat(lng ?? 38.716), parseFloat(lat ?? -9.1399)])
       const result = await searchHotelsByKeyword(keyword, page, limit, user?.customerDetails?.currentLocation ?? [parseFloat(lng ?? 38.716), parseFloat(lat ?? -9.1399)]);
 
       return res.status(200).json(makeJsonResponse('Search result', { result }, {}, 200, true));
