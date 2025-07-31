@@ -823,7 +823,18 @@ module.exports = {
                     },
                 },
             ]);
-            return popularHotels;
+            const formattedHotels = popularHotels.map((hotel) => ({
+                _id: hotel._id,
+                name: hotel.hotelDetails?.name || "",
+                description: hotel.hotelDetails?.description || "",
+                images: hotel.hotelDetails?.images?.hotelMainImage || [],
+                averageRating: hotel.ratings?.averageRating || 0,
+                mainOfferName: hotel.mainOffer?.name || "",
+                mainOfferTagLine: hotel.mainOffer?.tag_line || "",
+                mainOfferDeduction: hotel.mainOffer?.deductionAmount || 0,
+            }));
+            return formattedHotels;
+            // return popularHotels;
         } catch (err) {
             console.error("Error getMainFoodCategoryListByCount (from service file):", err);
             return false;
